@@ -1,0 +1,13 @@
+{
+  "name": "opaque-ai-privacy-guard",
+  "version": "1.0.0",
+  "description": "Chrome extension to protect sensitive information in AI interactions",
+  "private": true,
+  "scripts": {
+    "generate-icons": "node icons/generate-icons.js",
+    "build": "npm run generate-icons"
+  },
+  "devDependencies": {
+    "sharp": "^0.32.6"
+  }
+}

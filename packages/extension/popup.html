@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OpaqueAI Privacy Guard</title>
+  <style>
+    body {
+      width: 300px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .logo {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0;
+      color: #333;
+    }
+    .status {
+      padding: 12px;
+      border-radius: 6px;
+      background: #f0f9ff;
+      margin-bottom: 16px;
+    }
+    .status.active {
+      background: #ecfdf5;
+      color: #059669;
+    }
+    .settings {
+      border-top: 1px solid #eee;
+      padding-top: 16px;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>OpaqueAI Privacy Guard</h1>
+  </div>
+  
+  <div class="status active">
+    Privacy protection is active
+  </div>
+  
+  <div class="settings">
+    <div class="toggle">
+      <span>Detect SSN</span>
+      <input type="checkbox" checked>
+    </div>
+    <div class="toggle">
+      <span>Detect Credit Cards</span>
+      <input type="checkbox" checked>
+    </div>
+    <div class="toggle">
+      <span>Detect Medical Records</span>
+      <input type="checkbox" checked>
+    </div>
+    <div class="toggle">
+      <span>Detect Email Addresses</span>
+      <input type="checkbox" checked>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "opaque-ai",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "landing": "cd packages/landing && npm run dev",
+    "dashboard": "cd packages/dashboard && npm run dev",
+    "extension:build": "cd packages/extension && npm run build",
+    "extension:package": "cd packages/extension && npm run package"
+  }
+}
