@@ -6,17 +6,12 @@
     "packages/*"
   ],
   "scripts": {
-    "landing": "cd packages/landing && npm run dev",
-    "dashboard": "cd packages/dashboard && npm run dev",
-    "extension:build": "cd packages/extension && npm run build",
-    "extension:package": "cd packages/extension && npm run package",
-    "build": "npm run build --workspaces --if-present"
+    "dev": "npm run dev --workspace=packages/landing",
+    "build": "node build.js",
+    "start": "npm run start --workspace=packages/landing"
   },
-  "resolutions": {
-    "@types/react": "^19.0.0",
-    "next": "^14.0.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+  "dependencies": {
+    "fs-extra": "^11.2.0"
   },
   "engines": {
     "node": ">=18.17.0"
