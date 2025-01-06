@@ -1,24 +1,30 @@
 {
-  "name": "opaque-ai-web",
+  "name": "opaque-ai-landing",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "14.0.4",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@supabase/supabase-js": "^2.39.1",
-    "tailwindcss": "^3.4.0",
-    "typescript": "^5.3.3",
-    "@types/react": "^18.2.45",
-    "@types/node": "^20.10.5",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.32"
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/supabase-js": "^2.47.10",
+    "@types/node": "^20.17.11",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "clsx": "^2.1.1",
+    "next": "^14.0.4",
+    "postcss": "^8.4.49",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
