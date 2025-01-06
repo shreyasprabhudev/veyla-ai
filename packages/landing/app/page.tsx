@@ -188,30 +188,66 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    // Smooth scroll to section when hash changes
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash) {
+        const section = document.querySelector(hash);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    };
+
+    // Handle initial hash on page load
+    handleHashChange();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between">
+    <div className="min-h-screen bg-black text-white">
       <Navbar />
       
-      <div ref={parallaxRef} className="parallax-wrapper w-full">
-        {/* Hero Section */}
-        <section className="parallax-section min-h-screen flex items-center justify-center relative">
-          <div className="parallax-bg bg-gradient-to-b from-black to-purple-900" />
-          <div className="parallax-content text-center px-6 md:px-12 lg:px-24">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Welcome to Veyla AI
+      {/* Hero Section */}
+      <main className="relative isolate">
+        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
+          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-purple-600 to-purple-800 opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
+        </div>
+        
+        <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
+              Privacy-First AI Interactions
             </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8">
-              The future of AI-powered solutions
+            <p className="mt-6 text-lg leading-8 text-gray-300">
+              Protect your sensitive information while leveraging the power of AI. VeylaAI ensures your data stays private and secure.
             </p>
             <HeroButtons />
           </div>
-        </section>
+        </div>
+      </main>
 
-        {/* Features Section */}
-        <section id="features" className="parallax-section min-h-screen flex items-center justify-center relative">
-          <div className="parallax-bg bg-gradient-to-b from-purple-900 to-black" />
-          <div className="parallax-content grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6 md:px-12 lg:px-24">
-            {/* Feature cards */}
+      {/* Features Section */}
+      <div id="features" className="py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-5xl">
+              Features
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-300">
+              Our platform combines cutting-edge technology with intuitive design to deliver exceptional results.
+            </p>
+          </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature) => (
               <div key={feature.title} className="bg-black/50 backdrop-blur-lg p-6 rounded-lg">
                 <h3 className="text-2xl font-bold text-white mb-4">{feature.title}</h3>
@@ -219,27 +255,23 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </div>
 
-        {/* About Section */}
-        <section id="about" className="parallax-section min-h-screen flex items-center justify-center relative">
-          <div className="parallax-bg bg-gradient-to-b from-black to-purple-900" />
-          <div className="parallax-content text-center px-6 md:px-12 lg:px-24">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              About Veyla AI
+      {/* Testimonials Section */}
+      <div id="testimonials" className="py-24 sm:py-32 bg-gray-950">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-5xl">
+              Testimonials
             </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              We're building the next generation of AI-powered tools to help businesses grow and succeed.
-              Our platform combines cutting-edge technology with intuitive design to deliver exceptional results.
+            <p className="mt-6 text-lg leading-8 text-gray-300">
+              Our customers love us. Here's what they have to say.
             </p>
           </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section id="testimonials" className="parallax-section min-h-screen flex items-center justify-center relative">
-          <div className="parallax-bg bg-gradient-to-b from-purple-900 to-black" />
-          <div className="parallax-content grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6 md:px-12 lg:px-24">
-            {/* Testimonial cards */}
+        </div>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {testimonials.map((testimonial) => (
               <div key={testimonial.name} className="bg-black/50 backdrop-blur-lg p-6 rounded-lg">
                 <div className="flex items-center gap-x-4">
@@ -255,13 +287,23 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </div>
 
-        {/* Pricing Section */}
-        <section id="pricing" className="parallax-section min-h-screen flex items-center justify-center relative">
-          <div className="parallax-bg bg-gradient-to-b from-black to-purple-900" />
-          <div className="parallax-content grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6 md:px-12 lg:px-24">
-            {/* Pricing cards */}
+      {/* Pricing Section */}
+      <div id="pricing" className="py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-5xl">
+              Pricing
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-300">
+              Our pricing plans are designed to fit your needs.
+            </p>
+          </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {pricing.map((plan) => (
               <div
                 key={plan.name}
@@ -283,8 +325,8 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </section>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
