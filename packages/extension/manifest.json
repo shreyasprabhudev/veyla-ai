@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "OpaqueAI",
+  "name": "VeylaAI",
   "version": "1.0.0",
   "description": "Protect your sensitive information while using AI platforms",
   "permissions": [

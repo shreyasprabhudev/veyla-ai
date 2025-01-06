@@ -1,4 +1,4 @@
-// OpaqueAI Theme Colors
+// VeylaAI Theme Colors
 const theme = {
   colors: {
     primary: '#7C3AED',      // Main purple

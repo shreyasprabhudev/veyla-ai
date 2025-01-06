@@ -24,7 +24,7 @@ export default function Dashboard() {
 
   return (
     <main className="p-4 md:p-10 mx-auto max-w-7xl">
-      <Title>OpaqueAI Admin Dashboard</Title>
+      <Title>VeylaAI Admin Dashboard</Title>
       <Text>Monitor privacy protection across all users</Text>
 
       <div className="mt-6">

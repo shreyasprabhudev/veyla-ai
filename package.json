@@ -1,5 +1,5 @@
 {
-  "name": "opaque-ai",
+  "name": "veyla-ai",
   "version": "1.0.0",
   "private": true,
   "workspaces": [
@@ -9,6 +9,10 @@
     "landing": "cd packages/landing && npm run dev",
     "dashboard": "cd packages/dashboard && npm run dev",
     "extension:build": "cd packages/extension && npm run build",
-    "extension:package": "cd packages/extension && npm run package"
+    "extension:package": "cd packages/extension && npm run package",
+    "build": "npm run build --workspace=packages/landing"
+  },
+  "resolutions": {
+    "@types/react": "^19.0.0"
   }
 }

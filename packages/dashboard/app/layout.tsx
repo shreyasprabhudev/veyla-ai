@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'OpaqueAI Admin Dashboard',
+  title: 'VeylaAI Admin Dashboard',
   description: 'Monitor and manage privacy protection across all users',
 };
 

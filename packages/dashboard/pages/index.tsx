@@ -18,16 +18,16 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Head>
-        <title>OpaqueAI Dashboard</title>
+        <title>VeylaAI Dashboard</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center">
           <div className="bg-purple-600 w-10 h-10 rounded-full flex items-center justify-center mr-4">
-            <span className="text-white text-xl font-bold">O</span>
+            <span className="text-white text-xl font-bold">V</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">OpaqueAI Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">VeylaAI Dashboard</h1>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
