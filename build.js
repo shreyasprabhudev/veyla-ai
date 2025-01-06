@@ -2,36 +2,32 @@ const { execSync } = require('child_process');
 const fs = require('fs-extra');
 const path = require('path');
 
-// Build both projects
-console.log('Building landing...');
-execSync('cd packages/landing && npm run build', { stdio: 'inherit' });
-
-console.log('Building dashboard...');
-execSync('cd packages/dashboard && npm run build', { stdio: 'inherit' });
-
 // Create dist directory
 const distDir = path.join(__dirname, 'dist');
 fs.ensureDirSync(distDir);
 
-// Helper function to copy Next.js build output
-function copyNextOutput(sourcePath, targetPath) {
-  // Copy the entire .next directory
-  fs.copySync(sourcePath, targetPath, {
-    filter: (src) => {
-      // Skip cache directories
-      return !src.includes('cache');
-    }
-  });
-}
+// Build landing
+console.log('Building landing...');
+execSync('cd packages/landing && npm run build', { stdio: 'inherit' });
+
+// Build dashboard
+console.log('Building dashboard...');
+execSync('cd packages/dashboard && npm run build', { stdio: 'inherit' });
 
 // Copy landing build
 console.log('Copying landing build...');
-copyNextOutput(
-  path.join(__dirname, 'packages/landing/.next'),
-  path.join(distDir, '.next')
+fs.copySync(
+  path.join(__dirname, 'packages/landing/.next/static'),
+  path.join(distDir, '_next/static')
 );
 
-// Copy landing public files
+// Copy landing HTML files
+fs.copySync(
+  path.join(__dirname, 'packages/landing/out'),
+  distDir
+);
+
+// Copy landing public files if they exist
 const landingPublicDir = path.join(__dirname, 'packages/landing/public');
 if (fs.existsSync(landingPublicDir)) {
   fs.copySync(landingPublicDir, distDir);
@@ -39,29 +35,21 @@ if (fs.existsSync(landingPublicDir)) {
 
 // Copy dashboard build
 console.log('Copying dashboard build...');
-const dashboardDist = path.join(distDir, 'dashboard');
-fs.ensureDirSync(dashboardDist);
-
-copyNextOutput(
-  path.join(__dirname, 'packages/dashboard/.next'),
-  path.join(dashboardDist, '.next')
+fs.copySync(
+  path.join(__dirname, 'packages/dashboard/.next/static'),
+  path.join(distDir, 'dashboard/_next/static')
 );
 
-// Copy dashboard public files
+// Copy dashboard HTML files
+fs.copySync(
+  path.join(__dirname, 'packages/dashboard/out'),
+  path.join(distDir, 'dashboard')
+);
+
+// Copy dashboard public files if they exist
 const dashboardPublicDir = path.join(__dirname, 'packages/dashboard/public');
 if (fs.existsSync(dashboardPublicDir)) {
-  fs.copySync(dashboardPublicDir, dashboardDist);
+  fs.copySync(dashboardPublicDir, path.join(distDir, 'dashboard'));
 }
-
-// Copy package.json files for runtime configuration
-fs.copySync(
-  path.join(__dirname, 'packages/landing/package.json'),
-  path.join(distDir, 'package.json')
-);
-
-fs.copySync(
-  path.join(__dirname, 'packages/dashboard/package.json'),
-  path.join(dashboardDist, 'package.json')
-);
 
 console.log('Build complete!');

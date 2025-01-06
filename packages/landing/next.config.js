@@ -6,5 +6,5 @@ module.exports = {
   },
   // This allows client-side routing to work with static export
   trailingSlash: true,
-  basePath: '/dashboard',
-}
+  skipTrailingSlashRedirect: true,
+};
