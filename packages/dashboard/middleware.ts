@@ -29,7 +29,10 @@ export async function middleware(req: NextRequest) {
 
   // If user is not signed in, redirect them to the landing page login
   if (!session) {
-    return NextResponse.redirect('http://localhost:3000/login');
+    const url = req.nextUrl.clone();
+    // In production, use the same domain but on the landing subdomain
+    const loginUrl = url.protocol + '//' + url.host.replace('dashboard.', '') + '/login';
+    return NextResponse.redirect(loginUrl);
   }
 
   return res;
