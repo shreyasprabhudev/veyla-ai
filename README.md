@@ -1,4 +1,4 @@
-# OpaqueAI
+# VeylaAI
 
 A privacy-first AI platform that protects sensitive information in AI interactions.
 

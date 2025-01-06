@@ -8,9 +8,9 @@ export function Navbar() {
       <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
         <div className="flex lg:flex-1">
           <a href="/" className="-m-1.5 p-1.5">
-            <span className="sr-only">OpaqueAI</span>
+            <span className="sr-only">VeylaAI</span>
             <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
-              OpaqueAI
+              VeylaAI
             </div>
           </a>
         </div>

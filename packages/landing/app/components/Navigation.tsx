@@ -1,130 +1,241 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Fragment, useEffect, useState } from 'react'
+import { Disclosure, Menu, Transition } from '@headlessui/react'
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { UserIcon } from '@heroicons/react/24/solid'
+import { createBrowserClient } from '@supabase/ssr'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { cn } from '../lib/utils'
 
-export function Navigation() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const navigation = [
+  { name: 'Home', href: '/' },
+  { name: 'About', href: '/#about' },
+  { name: 'Features', href: '/#features' },
+  { name: 'Pricing', href: '/#pricing' },
+]
+
+export default function Navigation() {
+  const pathname = usePathname()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            const cookie = document.cookie
+              .split('; ')
+              .find((row) => row.startsWith(`${name}=`))
+            return cookie ? cookie.split('=')[1] : undefined
+          },
+          set(name: string, value: string, options: any) {
+            document.cookie = `${name}=${value}; path=/; max-age=${options.maxAge}`
+          },
+          remove(name: string, options: any) {
+            document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+          },
+        },
+      }
+    )
+
+    const checkUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        setUser(user)
+      } catch (error) {
+        console.error('Error fetching user:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   return (
-    <>
-      <div className="flex lg:hidden">
-        <button
-          type="button"
-          className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-400"
-          onClick={() => setMobileMenuOpen(true)}
-        >
-          <span className="sr-only">Open main menu</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="h-6 w-6"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-            />
-          </svg>
-        </button>
-      </div>
-      <div className="hidden lg:flex lg:gap-x-12">
-        <a href="#features" className="text-sm font-semibold leading-6 text-white hover:text-purple-400">
-          Features
-        </a>
-        <a href="#testimonials" className="text-sm font-semibold leading-6 text-white hover:text-purple-400">
-          Testimonials
-        </a>
-        <a href="#pricing" className="text-sm font-semibold leading-6 text-white hover:text-purple-400">
-          Pricing
-        </a>
-      </div>
-      <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-        <Button
-          href="/dashboard"
-          className="bg-purple-600 hover:bg-purple-700"
-        >
-          Get Started
-        </Button>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden">
-          <div className="fixed inset-0 z-50" />
-          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-black px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-            <div className="flex items-center justify-between">
-              <a href="/" className="-m-1.5 p-1.5">
-                <span className="sr-only">VeylaAI</span>
-                <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
-                  VeylaAI
+    <Disclosure as="nav" className="fixed w-full bg-black/80 backdrop-blur-md z-50">
+      {({ open }) => (
+        <>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 justify-between">
+              <div className="flex">
+                <div className="-ml-2 mr-2 flex items-center md:hidden">
+                  <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                    <span className="absolute -inset-0.5" />
+                    <span className="sr-only">Open main menu</span>
+                    {open ? (
+                      <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
+                    ) : (
+                      <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
+                    )}
+                  </Disclosure.Button>
                 </div>
-              </a>
-              <button
-                type="button"
-                className="-m-2.5 rounded-md p-2.5 text-gray-400"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span className="sr-only">Close menu</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="h-6 w-6"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="mt-6 flow-root">
-              <div className="-my-6 divide-y divide-gray-500/10">
-                <div className="space-y-2 py-6">
-                  <a
-                    href="#features"
-                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-gray-800"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Features
-                  </a>
-                  <a
-                    href="#testimonials"
-                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-gray-800"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Testimonials
-                  </a>
-                  <a
-                    href="#pricing"
-                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-gray-800"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Pricing
-                  </a>
+                <div className="flex flex-shrink-0 items-center">
+                  <Link href="/" className="text-xl font-bold text-white">
+                    Veyla AI
+                  </Link>
                 </div>
-                <div className="py-6">
-                  <Button
-                    href="/dashboard"
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                  >
-                    Get Started
-                  </Button>
+                <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4">
+                  {navigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        pathname === item.href
+                          ? 'bg-gray-900 text-white'
+                          : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                        'rounded-md px-3 py-2 text-sm font-medium'
+                      )}
+                      aria-current={pathname === item.href ? 'page' : undefined}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
                 </div>
+              </div>
+              <div className="flex items-center">
+                {loading ? (
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-gray-700" />
+                ) : user ? (
+                  <Menu as="div" className="relative ml-3">
+                    <div>
+                      <Menu.Button className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                        <span className="absolute -inset-1.5" />
+                        <span className="sr-only">Open user menu</span>
+                        <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center">
+                          <UserIcon className="h-5 w-5 text-gray-300" />
+                        </div>
+                      </Menu.Button>
+                    </div>
+                    <Transition
+                      as={Fragment}
+                      enter="transition ease-out duration-100"
+                      enterFrom="transform opacity-0 scale-95"
+                      enterTo="transform opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="transform opacity-100 scale-100"
+                      leaveTo="transform opacity-0 scale-95"
+                    >
+                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              href="/dashboard"
+                              className={cn(
+                                active ? 'bg-gray-100' : '',
+                                'block px-4 py-2 text-sm text-gray-700'
+                              )}
+                            >
+                              Dashboard
+                            </Link>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              href="/settings"
+                              className={cn(
+                                active ? 'bg-gray-100' : '',
+                                'block px-4 py-2 text-sm text-gray-700'
+                              )}
+                            >
+                              Settings
+                            </Link>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={async () => {
+                                const supabase = createBrowserClient(
+                                  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                                  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                                  {
+                                    cookies: {
+                                      get(name: string) {
+                                        const cookie = document.cookie
+                                          .split('; ')
+                                          .find((row) => row.startsWith(`${name}=`))
+                                        return cookie ? cookie.split('=')[1] : undefined
+                                      },
+                                      set(name: string, value: string, options: any) {
+                                        document.cookie = `${name}=${value}; path=/; max-age=${options.maxAge}`
+                                      },
+                                      remove(name: string, options: any) {
+                                        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+                                      },
+                                    },
+                                  }
+                                )
+                                await supabase.auth.signOut()
+                              }}
+                              className={cn(
+                                active ? 'bg-gray-100' : '',
+                                'block w-full text-left px-4 py-2 text-sm text-gray-700'
+                              )}
+                            >
+                              Sign out
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </Menu.Items>
+                    </Transition>
+                  </Menu>
+                ) : (
+                  <div className="flex items-center space-x-4">
+                    <Link
+                      href="/login"
+                      className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="bg-white text-black hover:bg-gray-200 rounded-md px-3 py-2 text-sm font-medium"
+                    >
+                      Get Started
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
+
+          <Disclosure.Panel className="md:hidden">
+            <div className="space-y-1 px-2 pb-3 pt-2">
+              {navigation.map((item) => (
+                <Disclosure.Button
+                  key={item.name}
+                  as={Link}
+                  href={item.href}
+                  className={cn(
+                    pathname === item.href
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                    'block rounded-md px-3 py-2 text-base font-medium'
+                  )}
+                  aria-current={pathname === item.href ? 'page' : undefined}
+                >
+                  {item.name}
+                </Disclosure.Button>
+              ))}
+            </div>
+          </Disclosure.Panel>
+        </>
       )}
-    </>
-  );
+    </Disclosure>
+  )
 }

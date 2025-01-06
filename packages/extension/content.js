@@ -220,12 +220,12 @@ function showWarningTooltip(element, sensitiveParts) {
 
 // Wait for specific element to be available
 function waitForElement(selector, timeout = 10000) {
-  console.log(`[OpaqueAI] Waiting for element: ${selector}`);
+  console.log(`[VeylaAI] Waiting for element: ${selector}`);
   return new Promise((resolve) => {
     // First try: immediate check
     const element = document.querySelector(selector);
     if (element) {
-      console.log(`[OpaqueAI] Element found immediately: ${selector}`);
+      console.log(`[VeylaAI] Element found immediately: ${selector}`);
       return resolve(element);
     }
 
@@ -233,7 +233,7 @@ function waitForElement(selector, timeout = 10000) {
     setTimeout(() => {
       const element = document.querySelector(selector);
       if (element) {
-        console.log(`[OpaqueAI] Element found after short wait: ${selector}`);
+        console.log(`[VeylaAI] Element found after short wait: ${selector}`);
         return resolve(element);
       }
 
@@ -241,7 +241,7 @@ function waitForElement(selector, timeout = 10000) {
       const observer = new MutationObserver((mutations, obs) => {
         const element = document.querySelector(selector);
         if (element) {
-          console.log(`[OpaqueAI] Element found after waiting: ${selector}`);
+          console.log(`[VeylaAI] Element found after waiting: ${selector}`);
           obs.disconnect();
           resolve(element);
         }
@@ -260,10 +260,10 @@ function waitForElement(selector, timeout = 10000) {
         // One final check before timing out
         const element = document.querySelector(selector);
         if (element) {
-          console.log(`[OpaqueAI] Element found in final check: ${selector}`);
+          console.log(`[VeylaAI] Element found in final check: ${selector}`);
           resolve(element);
         } else {
-          console.log(`[OpaqueAI] Timeout waiting for element: ${selector}`);
+          console.log(`[VeylaAI] Timeout waiting for element: ${selector}`);
           resolve(null);
         }
       }, timeout);
@@ -294,10 +294,10 @@ async function checkAndHighlightSensitiveInfo(input) {
     text = input.value || input.textContent || input.innerText || '';
   }
 
-  console.log('[OpaqueAI] Checking text:', text);
+  console.log('[VeylaAI] Checking text:', text);
   
   if (!text) {
-    console.log('[OpaqueAI] No text to check');
+    console.log('[VeylaAI] No text to check');
     return null;
   }
 
@@ -317,7 +317,7 @@ async function checkAndHighlightSensitiveInfo(input) {
   for (const [type, { pattern, description }] of Object.entries(PATTERNS)) {
     const matches = Array.from(text.matchAll(pattern));
     if (matches.length > 0) {
-      console.log(`[OpaqueAI] Found ${matches.length} matches for ${type}`);
+      console.log(`[VeylaAI] Found ${matches.length} matches for ${type}`);
       sensitiveParts = { [type]: matches.map(m => m[0]) };
       
       try {
@@ -359,21 +359,21 @@ async function checkAndHighlightSensitiveInfo(input) {
           }
         } 
       } catch (e) {
-        console.error('[OpaqueAI] Failed to highlight text:', e);
+        console.error('[VeylaAI] Failed to highlight text:', e);
       }
       break;
     }
   }
 
   if (sensitiveParts && highlightedRange) {
-    console.log('[OpaqueAI] Showing warning tooltip');
+    console.log('[VeylaAI] Showing warning tooltip');
     const shouldKeep = await showWarningTooltip(
       highlightedRange.commonAncestorContainer?.parentElement || highlightedRange,
       sensitiveParts
     );
     
     if (!shouldKeep) {
-      console.log('[OpaqueAI] Removing sensitive text');
+      console.log('[VeylaAI] Removing sensitive text');
       if (input.isContentEditable || input.querySelector('[contenteditable="true"]')) {
         const span = highlightedRange.commonAncestorContainer.parentElement;
         if (span && span.parentElement) {
@@ -404,7 +404,7 @@ function debounce(func, wait) {
 
 // Handle submit event
 async function handleSubmit(e) {
-  console.log('OpaqueAI: Submit button clicked');
+  console.log('VeylaAI: Submit button clicked');
   const input = document.querySelector(LLM_PLATFORMS[window.location.hostname].inputSelector);
   if (!input) return;
 
@@ -421,12 +421,12 @@ async function handleSubmit(e) {
 
 // Initialize the extension
 async function initialize(retryCount = 0) {
-  console.log(`[OpaqueAI] Initializing... (attempt ${retryCount + 1})`);
+  console.log(`[VeylaAI] Initializing... (attempt ${retryCount + 1})`);
   
   try {
     // Wait for DOM to be ready first
     await waitForDOM();
-    console.log('[OpaqueAI] DOM is ready');
+    console.log('[VeylaAI] DOM is ready');
 
     // Then inject styles
     injectStyles();
@@ -436,16 +436,16 @@ async function initialize(retryCount = 0) {
     const platformConfig = LLM_PLATFORMS[hostname];
     
     if (!platformConfig) {
-      console.log('[OpaqueAI] Platform not supported:', hostname);
+      console.log('[VeylaAI] Platform not supported:', hostname);
       return;
     }
 
-    console.log('[OpaqueAI] Platform config:', platformConfig);
+    console.log('[VeylaAI] Platform config:', platformConfig);
 
     // Function to check initial content
     const checkInitialContent = async (element) => {
       if (!element) return;
-      console.log('[OpaqueAI] Checking initial content');
+      console.log('[VeylaAI] Checking initial content');
       await checkAndHighlightSensitiveInfo(element);
     };
 
@@ -494,10 +494,10 @@ async function initialize(retryCount = 0) {
 
     // Add input event listeners for real-time checking
     const checkInput = debounce(async (event) => {
-      console.log('[OpaqueAI] Input event triggered');
+      console.log('[VeylaAI] Input event triggered');
       const target = event.target.closest('.ProseMirror') || event.target;
       const text = getTextContent(target);
-      console.log('[OpaqueAI] Detected text:', text);
+      console.log('[VeylaAI] Detected text:', text);
       
       if (text) {
         await checkAndHighlightSensitiveInfo(target);
@@ -529,7 +529,7 @@ async function initialize(retryCount = 0) {
     const observer = new MutationObserver((mutations) => {
       const submit = document.querySelector(platformConfig.submitSelector);
       if (submit && !submit.hasOpaqueListener) {
-        console.log('[OpaqueAI] Submit button found, attaching listener');
+        console.log('[VeylaAI] Submit button found, attaching listener');
         submit.addEventListener(platformConfig.submitEvent, handleSubmit, true);
         submit.hasOpaqueListener = true;
       }
@@ -541,11 +541,11 @@ async function initialize(retryCount = 0) {
       attributes: true
     });
 
-    console.log('[OpaqueAI] Initialization complete');
+    console.log('[VeylaAI] Initialization complete');
   } catch (error) {
-    console.error('[OpaqueAI] Initialization error:', error);
+    console.error('[VeylaAI] Initialization error:', error);
     if (retryCount < 3) {
-      console.log(`[OpaqueAI] Retrying after error... (attempt ${retryCount + 2})`);
+      console.log(`[VeylaAI] Retrying after error... (attempt ${retryCount + 2})`);
       setTimeout(() => initialize(retryCount + 1), 2000);
     }
   }

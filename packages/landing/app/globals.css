@@ -4,10 +4,46 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-rgb: 245, 245, 245;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+/* Prevent overscroll */
+html, body {
+  overscroll-behavior: none;
+  overflow-x: hidden;
+  background: #000;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Parallax container */
+.parallax-wrapper {
+  height: 100vh;
+  overflow-x: hidden;
+  perspective: 10px;
+  transform-style: preserve-3d;
+}
+
+.parallax-section {
+  position: relative;
+  height: 100vh;
+  transform-style: preserve-3d;
+}
+
+.parallax-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateZ(-10px) scale(2);
+}
+
+.parallax-content {
+  position: relative;
+  transform: translateZ(0);
 }

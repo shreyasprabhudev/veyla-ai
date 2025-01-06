@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'OpaqueAI - Privacy-First AI Platform',
+  title: 'VeylaAI - Privacy-First AI Platform',
   description: 'Protect sensitive information in AI interactions',
 };
 
