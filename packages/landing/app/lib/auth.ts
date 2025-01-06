@@ -1,9 +1,35 @@
-import { createClient } from '@supabase/supabase-js';
+'use client';
+
+import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createBrowserClient(
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    cookies: {
+      get(name: string) {
+        const cookies = document.cookie.split('; ');
+        const cookie = cookies.find(c => c.startsWith(`${name}=`));
+        return cookie ? cookie.split('=')[1] : undefined;
+      },
+      set(name: string, value: string, options: any) {
+        document.cookie = `${name}=${value}; path=/; ${
+          options.domain ? `domain=${options.domain};` : ''
+        } ${options.maxAge ? `max-age=${options.maxAge};` : ''} ${
+          options.secure ? 'secure;' : ''
+        } ${options.sameSite ? `samesite=${options.sameSite};` : ''}`;
+      },
+      remove(name: string, options: any) {
+        document.cookie = `${name}=; path=/; ${
+          options.domain ? `domain=${options.domain};` : ''
+        } expires=Thu, 01 Jan 1970 00:00:00 GMT;`;
+      },
+    },
+  }
+);
 
 export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
