@@ -9,7 +9,7 @@ const supabase = createBrowserClient(
   supabaseUrl,
   supabaseAnonKey,
   {
-    cookies: {
+    cookies: typeof document !== 'undefined' ? {
       get(name: string) {
         const cookies = document.cookie.split('; ');
         const cookie = cookies.find(c => c.startsWith(`${name}=`));
@@ -27,7 +27,11 @@ const supabase = createBrowserClient(
           options.domain ? `domain=${options.domain};` : ''
         } expires=Thu, 01 Jan 1970 00:00:00 GMT;`;
       },
-    },
+    } : {
+      get: () => undefined,
+      set: () => {},
+      remove: () => {},
+    }
   }
 );
 
