@@ -1,7 +1,4 @@
-import React from 'react';
-import Head from 'next/head';
-
-const Home: React.FC = () => {
+export default function Home() {
   // Sample data - replace with actual data from your backend
   const data = {
     totalProtected: 1250,
@@ -17,11 +14,6 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Head>
-        <title>VeylaAI Dashboard</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center">
           <div className="bg-purple-600 w-10 h-10 rounded-full flex items-center justify-center mr-4">
@@ -102,6 +94,4 @@ const Home: React.FC = () => {
       </main>
     </div>
   );
-};
-
-export default Home;
+}

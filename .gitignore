@@ -5,41 +5,58 @@ node_modules/
 
 # Testing
 coverage/
+.nyc_output/
 
-# Next.js
+# Build outputs
 .next/
 out/
 build/
 dist/
+*.tsbuildinfo
 
-# Production
-build/
-
-# Debug
+# Debug logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Local env files
-.env*.local
+# Environment variables
 .env
+.env.*
+!.env.example
+!.env.template
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
+*.swn
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+*.pem
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
 
 # Chrome Extension
 *.pem
 *.crx
+*.zip
+web-ext-artifacts/
 
 # Vercel
 .vercel
+.now
 
 # TypeScript
 *.tsbuildinfo
@@ -48,7 +65,36 @@ next-env.d.ts
 # Package managers
 yarn.lock
 package-lock.json
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnpm-store/
 
-# Cache
+# Cache and temp files
 .cache/
+.temp/
+.tmp/
 .npm/
+tmp/
+temp/
+
+# AWS
+.aws/
+*.pkg
+cdk.out/
+cdk.context.json
+
+# Cloudflare
+.wrangler/
+.cloudflare/
+
+# Documentation
+*.guide.md
+docs/_build/
+
+# Misc
+*.bak
+*.backup
+*.old
+.history/

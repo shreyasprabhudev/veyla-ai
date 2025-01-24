@@ -27,12 +27,9 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // If user is not signed in, redirect them to the landing page login
-  if (!session) {
-    const url = req.nextUrl.clone();
-    // In production, use the same domain but on the landing subdomain
-    const loginUrl = url.protocol + '//' + url.host.replace('dashboard.', '') + '/login';
-    return NextResponse.redirect(loginUrl);
+  // Protect all routes except auth routes
+  if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
+    return NextResponse.redirect(new URL('/auth/signin', req.url));
   }
 
   return res;

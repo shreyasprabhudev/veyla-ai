@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
-  output: 'export',
+const nextConfig = {
+  output: 'standalone',
   images: {
-    unoptimized: true,
+    domains: ['avatars.githubusercontent.com', 'lh3.googleusercontent.com'],
   },
-  // This allows client-side routing to work with static export
-  trailingSlash: true,
-  basePath: '/dashboard',
+  experimental: {
+    // Server Actions are now stable in Next.js 14
+    // serverActions: true,
+  },
 }
+
+module.exports = nextConfig
