@@ -3,10 +3,10 @@ compatibility_date = "2024-01-05"
 
 [build]
 command = "npm install && npm run build"
-dist = "packages/landing/out"
+dist = "dist"
 
 [site]
-bucket = "./packages/landing/out"
+bucket = "dist"
 
 [build.environment]
 NODE_ENV = "production"
