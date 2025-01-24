@@ -230,6 +230,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <h1 className="text-4xl font-bold text-red-500 text-center py-4">BUILD TEST - JAN 24 1:06 AM PST</h1>
       <Navbar />
       
       {/* Hero Section */}
