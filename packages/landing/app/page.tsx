@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Navigation } from './components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/app/components/Navbar';
 import { HeroButtons } from '@/app/components/HeroButtons';
@@ -181,56 +180,19 @@ export default function Home() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session && window.location.pathname !== '/') {
-        window.location.href = 'https://app.veylaai.com';
+        if (process.env.NEXT_PUBLIC_ENV === 'development') {
+          console.log('Auth successful (development):', session);
+          return;
+        }
+        window.location.href = process.env.NEXT_PUBLIC_APP_URL || 'https://app.veylaai.com';
       }
     };
 
     checkAuth();
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!parallaxRef.current) return;
-      const scrolled = window.scrollY;
-      const sections = parallaxRef.current.querySelectorAll('.parallax-section');
-      
-      sections.forEach((section, index) => {
-        const speed = index * 0.5; // Different speed for each section
-        const yPos = -(scrolled * speed);
-        (section as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    // Smooth scroll to section when hash changes
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      if (hash) {
-        const section = document.querySelector(hash);
-        if (section) {
-          section.scrollIntoView({ behavior: 'smooth' });
-        }
-      }
-    };
-
-    // Handle initial hash on page load
-    handleHashChange();
-
-    // Listen for hash changes
-    window.addEventListener('hashchange', handleHashChange);
-
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-black text-white">
-      <h1 className="text-4xl font-bold text-red-500 text-center py-4">BUILD TEST - JAN 24 1:06 AM PST</h1>
       <Navbar />
       
       {/* Hero Section */}

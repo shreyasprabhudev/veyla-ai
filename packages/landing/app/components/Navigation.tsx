@@ -117,7 +117,7 @@ export function Navigation() {
                         <Menu.Item>
                           {({ active }) => (
                             <Link
-                              href="/dashboard"
+                              href={process.env.NEXT_PUBLIC_APP_URL || 'https://app.veylaai.com'}
                               className={cn(
                                 active ? 'bg-gray-100' : '',
                                 'block px-4 py-2 text-sm text-gray-700'
