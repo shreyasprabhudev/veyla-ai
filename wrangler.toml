@@ -3,11 +3,10 @@ compatibility_date = "2024-01-05"
 
 [build]
 command = "npm install && npm run build"
-cwd = "packages/dashboard"
-dist = ".next"
+dist = "dist"
 
 [site]
-bucket = "./packages/dashboard/.next"
+bucket = "./dist"
 
 [env.production]
 routes = [
@@ -15,5 +14,5 @@ routes = [
 ]
 
 [build.environment]
-NODE_VERSION = "18"
+NODE_ENV = "18"
 NPM_VERSION = "9"
