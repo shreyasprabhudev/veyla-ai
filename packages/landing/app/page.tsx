@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { Navigation } from './components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/app/components/Navbar';
@@ -170,6 +171,22 @@ const pricing = [
 
 export default function Home() {
   const parallaxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && window.location.pathname !== '/') {
+        window.location.href = 'https://app.veylaai.com';
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {

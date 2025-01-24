@@ -1,7 +1,27 @@
+'use client';
+
+import { useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { GoogleLoginButton } from '@/app/components/GoogleLoginButton';
 import { LoginForm } from '@/app/components/LoginForm';
 
 export default function LoginPage() {
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = 'https://app.veylaai.com';
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   return (
     <main className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">

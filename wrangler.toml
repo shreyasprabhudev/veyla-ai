@@ -3,16 +3,12 @@ compatibility_date = "2024-01-05"
 
 [build]
 command = "npm install && npm run build"
-dist = "dist"
+dist = "packages/landing/out"
 
 [site]
-bucket = "./dist"
-
-[env.production]
-routes = [
-  { pattern = "veylaai.com", custom_domain = true }
-]
+bucket = "./packages/landing/out"
 
 [build.environment]
-NODE_ENV = "18"
+NODE_ENV = "production"
+NODE_VERSION = "18"
 NPM_VERSION = "9"
