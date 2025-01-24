@@ -7,7 +7,6 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=packages/landing",
-    "build": "node build.js",
     "start": "npm run start --workspace=packages/landing"
   },
   "dependencies": {
