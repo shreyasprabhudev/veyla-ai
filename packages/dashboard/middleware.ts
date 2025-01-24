@@ -27,9 +27,9 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Protect all routes except auth routes
-  if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
-    return NextResponse.redirect(new URL('/auth/signin', req.url));
+  // Protect all routes and redirect to veylaai.com/login if not authenticated
+  if (!session) {
+    return NextResponse.redirect('https://veylaai.com/login');
   }
 
   return res;

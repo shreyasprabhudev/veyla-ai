@@ -38,14 +38,13 @@ export async function middleware(request: NextRequest) {
 
   // If user is not signed in and the current path is not / or /login,
   // redirect the user to /login
-  if (!session && !['/login', '/'].includes(request.nextUrl.pathname)) {
+  if (!session && !['/login', '/', '/auth/signup'].includes(request.nextUrl.pathname)) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // If user is signed in and the current path is /login,
-  // redirect the user to /dashboard
-  if (session && request.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // If user is signed in, redirect to app.veylaai.com
+  if (session) {
+    return NextResponse.redirect('https://app.veylaai.com')
   }
 
   return response
