@@ -50,4 +50,4 @@ jobs:
 
       - name: Update ECS service
         run: |
-          aws ecs update-service --cluster VeylaCluster --service DashboardService --force-new-deployment
+          aws ecs update-service --cluster VeylaStack-VeylaClusterBA05EB56-YlYM8byJoP7n --service VeylaStack-DashboardService73233129-yBxSXJ9iveDw --force-new-deployment
