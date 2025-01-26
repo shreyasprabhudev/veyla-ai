@@ -1,71 +1,51 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { NextResponse, type NextRequest } from 'next/server';
-import type { CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { NextResponse, type NextRequest } from 'next/server'
+import type { CookieOptions } from '@supabase/ssr'
 
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-  const cookieStore = cookies();
+  const requestUrl = new URL(request.url)
+  const cookieStore = cookies()
 
-  // Log request details for debugging
-  console.log('🔍 Full request URL:', request.url);
-  console.log('🔍 Request headers:', Object.fromEntries(request.headers));
-  console.log('🔍 Environment:', {
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_REDIRECT_URL: process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL,
-    NODE_ENV: process.env.NODE_ENV
-  });
+  // Debug logging
+  console.log('🔍 Incoming request URL:', request.url)
+  console.log('🔍 Headers:', Object.fromEntries(request.headers))
 
-  const code = requestUrl.searchParams.get('code');
-  const next = requestUrl.searchParams.get('next') ?? '/dashboard';
-
-  console.log('🔄 Processing OAuth callback');
-  console.log('📍 Next URL:', next);
-  console.log('🎫 Auth code present:', !!code);
-
-  // Get the app URL from environment or headers
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (() => {
-    const protocol = request.headers.get('x-forwarded-proto') || 'https';
-    const host = request.headers.get('x-forwarded-host') || 
-                 request.headers.get('host') || 
-                 'app.veylaai.com';
-    const url = `${protocol}://${host}`;
-    console.log('🌐 Constructed app URL:', url, {
-      protocol,
-      host,
-      'x-forwarded-proto': request.headers.get('x-forwarded-proto'),
-      'x-forwarded-host': request.headers.get('x-forwarded-host')
-    });
-    return url;
-  })();
-
+  const code = requestUrl.searchParams.get('code')
+  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
+  
   if (!code) {
-    console.error('❌ No code provided in callback');
-    return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent('No authorization code provided')}`);
+    // If no code, redirect to an error page or re-initiate sign-in
+    console.error('❌ No authorization code provided')
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/auth/error?error=${encodeURIComponent('No code provided')}`)
   }
 
+  // Derive appUrl for final redirect
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.veylaai.com'
+
+  // Initialize Supabase client with custom cookie handling
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         get(name: string) {
-          return cookieStore.get(name)?.value;
+          return cookieStore.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({
               name,
               value,
-              domain: '.veylaai.com',
+              domain: '.veylaai.com', // ensure subdomain usage
               path: '/',
               secure: true,
+              httpOnly: true,
               sameSite: 'lax',
               ...options
-            });
+            })
           } catch (error) {
-            console.error('🔴 Error setting cookie:', error);
+            console.error('🔴 Error setting cookie:', error)
           }
         },
         remove(name: string, options: CookieOptions) {
@@ -76,29 +56,32 @@ export async function GET(request: NextRequest) {
               domain: '.veylaai.com',
               path: '/',
               secure: true,
+              httpOnly: true,
               sameSite: 'lax',
               maxAge: 0,
               ...options
-            });
+            })
           } catch (error) {
-            console.error('🔴 Error removing cookie:', error);
+            console.error('🔴 Error removing cookie:', error)
           }
         },
       },
     }
-  );
+  )
 
   try {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    // Exchange the code for a session
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
-      console.error('🔴 Error exchanging code for session:', error);
-      return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent(error.message)}`);
+      console.error('🔴 Error exchanging code for session:', error)
+      return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent(error.message)}`)
     }
 
-    console.log('✅ Successfully exchanged code for session');
-    return NextResponse.redirect(`${appUrl}${next}`);
+    console.log('✅ Successfully exchanged code for session')
+    // Redirect to final destination (usually /dashboard)
+    return NextResponse.redirect(`${appUrl}${next}`)
   } catch (error: any) {
-    console.error('🔴 Error in callback:', error);
-    return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent(error.message || 'An unexpected error occurred')}`);
+    console.error('🔴 Unexpected error in callback:', error)
+    return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent(error.message || 'An unexpected error occurred')}`)
   }
 }
