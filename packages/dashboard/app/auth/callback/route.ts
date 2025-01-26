@@ -51,7 +51,8 @@ export async function GET(request: Request) {
       {
         auth: {
           flowType: 'pkce',
-          redirectTo: redirectUrl,
+          detectSessionInUrl: true,
+          persistSession: true,
         },
         cookies: {
           get(name: string) {

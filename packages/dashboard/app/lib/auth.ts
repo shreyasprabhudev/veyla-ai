@@ -70,6 +70,9 @@ export async function signUp(email: string, password: string) {
     password,
     options: {
       emailRedirectTo: getRedirectUrl(),
+      data: {
+        app_url: getAppUrl(),
+      }
     },
   });
 
