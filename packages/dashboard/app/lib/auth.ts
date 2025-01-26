@@ -4,12 +4,36 @@ import { createBrowserClient } from '@supabase/ssr';
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      flowType: 'pkce',
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      persistSession: true,
+    },
+    cookies: {
+      name: 'sb-session',
+      domain: '.veylaai.com',
+      path: '/',
+      sameSite: 'lax',
+      secure: true
+    }
+  }
 );
 
-// Get the app URL from environment, fallback to window.location.origin for development
+// Get the app URL from environment, with a secure default
 const getAppUrl = () => {
-  return process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_APP_URL || 'https://app.veylaai.com';
+};
+
+// Get the redirect URL from environment or construct it
+const getRedirectUrl = () => {
+  const appUrl = getAppUrl();
+  return process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL || `${appUrl}/auth/callback`;
 };
 
 export async function signInWithEmail(email: string, password: string) {
@@ -27,7 +51,7 @@ export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${getAppUrl()}/auth/callback`,
+      redirectTo: getRedirectUrl(),
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -45,7 +69,7 @@ export async function signUp(email: string, password: string) {
     email,
     password,
     options: {
-      emailRedirectTo: `${getAppUrl()}/auth/callback`,
+      emailRedirectTo: getRedirectUrl(),
     },
   });
 

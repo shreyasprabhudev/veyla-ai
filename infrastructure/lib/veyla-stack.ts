@@ -58,7 +58,16 @@ export class VeylaStack extends cdk.Stack {
       securityGroup: albSg,
     });
 
-    // Create target group
+    // Configure ALB attributes
+    const cfnAlb = alb.node.defaultChild as elbv2.CfnLoadBalancer;
+    cfnAlb.loadBalancerAttributes = [
+      { key: 'routing.http.preserve_host_header.enabled', value: 'true' },
+      { key: 'routing.http.xff_header_processing.mode', value: 'append' },
+      { key: 'routing.http.x_amzn_tls_version_and_cipher_suite.enabled', value: 'true' },
+      { key: 'routing.http.drop_invalid_header_fields.enabled', value: 'true' }
+    ];
+
+    // Create target group with custom health check
     const targetGroup = new elbv2.ApplicationTargetGroup(this, 'DashboardTarget', {
       vpc,
       port: 3000,
@@ -75,7 +84,7 @@ export class VeylaStack extends cdk.Stack {
       deregistrationDelay: cdk.Duration.seconds(30),
     });
 
-    // Create HTTPS Listener
+    // Create HTTPS Listener with custom header rules
     const httpsListener = alb.addListener('HttpsListener', {
       port: 443,
       protocol: elbv2.ApplicationProtocol.HTTPS,
@@ -83,11 +92,24 @@ export class VeylaStack extends cdk.Stack {
       defaultTargetGroups: [targetGroup],
     });
 
-    // Configure listener attributes to preserve host header
-    const cfnListener = httpsListener.node.defaultChild as elbv2.CfnListener;
-    cfnListener.addPropertyOverride('LoadBalancerAttributes', [
-      { Key: 'routing.http.preserve_host_header.enabled', Value: 'true' },
-      { Key: 'routing.http.xff_header_processing.mode', Value: 'append' }
+    // Add host-based routing rule
+    httpsListener.addAction('HostBasedRouting', {
+      priority: 1,
+      conditions: [
+        elbv2.ListenerCondition.hostHeaders(['app.veylaai.com'])
+      ],
+      action: elbv2.ListenerAction.forward([targetGroup], {
+        stickinessDuration: cdk.Duration.days(1)
+      })
+    });
+
+    // Add custom header rules
+    const cfnTargetGroup = targetGroup.node.defaultChild as elbv2.CfnTargetGroup;
+    cfnTargetGroup.addPropertyOverride('TargetGroupAttributes', [
+      { Key: 'stickiness.enabled', Value: 'true' },
+      { Key: 'stickiness.type', Value: 'app_cookie' },
+      { Key: 'stickiness.app_cookie.cookie_name', Value: 'session' },
+      { Key: 'stickiness.app_cookie.duration_seconds', Value: '86400' }
     ]);
 
     // Create HTTP Listener that redirects to HTTPS
@@ -162,6 +184,7 @@ export class VeylaStack extends cdk.Stack {
         NEXT_PUBLIC_APP_URL: 'https://app.veylaai.com',
         DOMAIN_NAME: 'veylaai.com',
         DEBUG: '*',  // Enable all debug logs
+        NEXT_PUBLIC_SUPABASE_REDIRECT_URL: 'https://app.veylaai.com/auth/callback',
         ...(process.env.NEXT_PUBLIC_SUPABASE_URL && { 
           NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL 
         }),

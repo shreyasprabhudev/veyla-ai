@@ -10,7 +10,9 @@ export async function GET(request: Request) {
   console.log('🔍 Request headers:', Object.fromEntries(request.headers));
   console.log('🔍 Environment:', {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    HOSTNAME: process.env.HOSTNAME,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_REDIRECT_URL: process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL,
+    NODE_ENV: process.env.NODE_ENV
   });
   
   const code = requestUrl.searchParams.get('code');
@@ -18,6 +20,7 @@ export async function GET(request: Request) {
 
   console.log('🔄 Processing OAuth callback');
   console.log('📍 Next URL:', next);
+  console.log('🎫 Auth code present:', !!code);
 
   // Get the app URL from environment variable or headers
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || (() => {
@@ -25,9 +28,20 @@ export async function GET(request: Request) {
     const host = request.headers.get('x-forwarded-host') || 
                  request.headers.get('host') || 
                  'app.veylaai.com';
-    return `${protocol}://${host}`;
+    const url = `${protocol}://${host}`;
+    console.log('🌐 Constructed app URL:', url, {
+      protocol,
+      host,
+      'x-forwarded-proto': request.headers.get('x-forwarded-proto'),
+      'x-forwarded-host': request.headers.get('x-forwarded-host')
+    });
+    return url;
   })();
-  console.log('🌐 App URL:', appUrl);
+  console.log('🌐 Using app URL:', appUrl);
+
+  // Get the redirect URL from environment or construct it
+  const redirectUrl = process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL || `${appUrl}/auth/callback`;
+  console.log('🔀 Using redirect URL:', redirectUrl);
 
   if (code) {
     const cookieStore = cookies();
@@ -35,6 +49,10 @@ export async function GET(request: Request) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
+        auth: {
+          flowType: 'pkce',
+          redirectTo: redirectUrl,
+        },
         cookies: {
           get(name: string) {
             return cookieStore.get(name)?.value;
