@@ -83,6 +83,13 @@ export class VeylaStack extends cdk.Stack {
       defaultTargetGroups: [targetGroup],
     });
 
+    // Configure listener attributes to preserve host header
+    const cfnListener = httpsListener.node.defaultChild as elbv2.CfnListener;
+    cfnListener.addPropertyOverride('LoadBalancerAttributes', [
+      { Key: 'routing.http.preserve_host_header.enabled', Value: 'true' },
+      { Key: 'routing.http.xff_header_processing.mode', Value: 'append' }
+    ]);
+
     // Create HTTP Listener that redirects to HTTPS
     alb.addListener('HttpListener', {
       port: 80,

@@ -19,8 +19,14 @@ export async function GET(request: Request) {
   console.log('🔄 Processing OAuth callback');
   console.log('📍 Next URL:', next);
 
-  // Get the app URL from environment variable
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  // Get the app URL from environment variable or headers
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (() => {
+    const protocol = request.headers.get('x-forwarded-proto') || 'https';
+    const host = request.headers.get('x-forwarded-host') || 
+                 request.headers.get('host') || 
+                 'app.veylaai.com';
+    return `${protocol}://${host}`;
+  })();
   console.log('🌐 App URL:', appUrl);
 
   if (code) {
