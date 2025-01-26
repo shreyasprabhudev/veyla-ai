@@ -2,25 +2,12 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      flowType: 'pkce',
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      persistSession: true,
-      cookieOptions: {
-        name: 'sb-session',
-        domain: '.veylaai.com',
-        path: '/',
-        sameSite: 'lax',
-        secure: true
-      }
-    }
-  }
-);
+export const createClient = () => {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+};
 
 // Get the app URL from environment, with a secure default
 const getAppUrl = () => {
@@ -37,6 +24,7 @@ const getRedirectUrl = () => {
 };
 
 export async function signInWithEmail(email: string, password: string) {
+  const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -48,6 +36,7 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 export async function signInWithGoogle() {
+  const supabase = createClient();
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -65,6 +54,7 @@ export async function signInWithGoogle() {
 }
 
 export async function signUp(email: string, password: string) {
+  const supabase = createClient();
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -72,7 +62,7 @@ export async function signUp(email: string, password: string) {
       emailRedirectTo: getRedirectUrl(),
       data: {
         app_url: getAppUrl(),
-      }
+      },
     },
   });
 
@@ -82,13 +72,16 @@ export async function signUp(email: string, password: string) {
 }
 
 export async function signOut() {
+  const supabase = createClient();
   const { error } = await supabase.auth.signOut();
+  
   if (error) {
     throw error;
   }
 }
 
 export async function getSession() {
+  const supabase = createClient();
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error) {
     throw error;
