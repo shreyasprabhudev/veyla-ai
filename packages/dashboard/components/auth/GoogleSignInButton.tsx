@@ -13,7 +13,7 @@ export function GoogleSignInButton() {
 
   const handleGoogleSignIn = async () => {
     console.log('🔵 Starting Google OAuth flow');
-    console.log('🔵 Redirect URL:', `${getAppUrl()}/auth/callback');
+    console.log('🔵 Redirect URL:', `${getAppUrl()}/auth/callback`);
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
