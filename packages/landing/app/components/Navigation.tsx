@@ -19,28 +19,28 @@ export function Navigation() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return document.cookie
-              .split('; ')
-              .find((row) => row.startsWith(`${name}=`))
-              ?.split('=')[1]
-          },
-          set(name: string, value: string, options: { domain?: string; path?: string; sameSite?: string; secure?: boolean }) {
-            document.cookie = `${name}=${value}; domain=${options.domain || '.veylaai.com'}; path=${options.path || '/'}; secure; samesite=lax`
-          },
-          remove(name: string, options: { domain?: string; path?: string }) {
-            document.cookie = `${name}=; domain=${options.domain || '.veylaai.com'}; path=${options.path || '/'}; expires=Thu, 01 Jan 1970 00:00:00 GMT`
-          },
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return document.cookie
+            .split('; ')
+            .find((row) => row.startsWith(`${name}=`))
+            ?.split('=')[1]
         },
-      }
-    )
+        set(name: string, value: string) {
+          document.cookie = `${name}=${value}; domain=.veylaai.com; path=/; secure; samesite=lax`
+        },
+        remove(name: string) {
+          document.cookie = `${name}=; domain=.veylaai.com; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+        },
+      },
+    }
+  )
 
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
@@ -56,26 +56,6 @@ export function Navigation() {
   }, [])
 
   const handleSignOut = async () => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return document.cookie
-              .split('; ')
-              .find((row) => row.startsWith(`${name}=`))
-              ?.split('=')[1]
-          },
-          set(name: string, value: string, options: { domain?: string; path?: string; sameSite?: string; secure?: boolean }) {
-            document.cookie = `${name}=${value}; domain=${options.domain || '.veylaai.com'}; path=${options.path || '/'}; secure; samesite=lax`
-          },
-          remove(name: string, options: { domain?: string; path?: string }) {
-            document.cookie = `${name}=; domain=${options.domain || '.veylaai.com'}; path=${options.path || '/'}; expires=Thu, 01 Jan 1970 00:00:00 GMT`
-          },
-        },
-      }
-    )
     await supabase.auth.signOut()
   }
 
