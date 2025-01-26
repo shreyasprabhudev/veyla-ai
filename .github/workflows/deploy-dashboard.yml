@@ -48,6 +48,35 @@ jobs:
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Update ECS service
+      - name: Get existing ECS service
+        id: get-service
+        continue-on-error: true
         run: |
-          aws ecs update-service --cluster VeylaCluster --service DashboardService --force-new-deployment
+          aws ecs list-services --cluster veyla-prod > services.json
+          echo "services=$(cat services.json)" >> $GITHUB_OUTPUT
+
+      - name: Deploy to ECS
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: veyla-dashboard
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          TASK_FAMILY="veyla-dashboard-task"
+          
+          # Get current task definition
+          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY)
+          
+          # Create new task definition
+          NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+          
+          # Register new task definition
+          NEW_TASK_INFO=$(echo $NEW_TASK_DEFINITION | aws ecs register-task-definition --cli-input-json file:///dev/stdin)
+          NEW_REVISION=$(echo $NEW_TASK_INFO | jq '.taskDefinition.revision')
+          
+          # Update service with new task definition
+          aws ecs update-service \
+            --cluster veyla-prod \
+            --service veyla-dashboard \
+            --task-definition ${TASK_FAMILY}:${NEW_REVISION} \
+            --force-new-deployment
