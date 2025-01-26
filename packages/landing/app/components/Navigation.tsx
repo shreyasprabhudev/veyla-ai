@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '../lib/utils'
 import { createClient } from '@supabase/supabase-js'
+import type { ElementType } from 'react'
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -105,7 +106,7 @@ export function Navigation() {
                       </Menu.Button>
                     </div>
                     <Transition
-                      as={Fragment}
+                      as={Fragment as ElementType}
                       enter="transition ease-out duration-100"
                       enterFrom="transform opacity-0 scale-95"
                       enterTo="transform opacity-100 scale-100"
@@ -116,7 +117,7 @@ export function Navigation() {
                       <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                         <Menu.Item>
                           {({ active }) => (
-                            <Link
+                            <a
                               href={process.env.NEXT_PUBLIC_APP_URL || 'https://app.veylaai.com'}
                               className={cn(
                                 active ? 'bg-gray-100' : '',
@@ -124,7 +125,7 @@ export function Navigation() {
                               )}
                             >
                               Dashboard
-                            </Link>
+                            </a>
                           )}
                         </Menu.Item>
                         <Menu.Item>
