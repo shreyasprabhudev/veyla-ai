@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Navbar } from '@/app/components/Navbar';
-import { HeroButtons } from '@/app/components/HeroButtons';
+import { Navigation } from '@/app/components/Navigation';
 
 const features = [
   {
@@ -60,54 +59,78 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    // Simple cookie check for "Welcome back" message
     const hasSession = document.cookie.includes('sb-token=');
     setIsLoggedIn(hasSession);
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col">
-      <div className="flex justify-end p-4">
-        {isLoggedIn ? (
-          <div className="flex gap-4 items-center">
-            <span className="text-sm text-gray-600">Welcome back!</span>
-            <a
-              href="https://app.veylaai.com/dashboard"
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Go to Dashboard
-            </a>
+    <main className="min-h-screen bg-black text-white">
+      <Navigation />
+      
+      {/* Hero Section */}
+      <div className="relative isolate px-6 pt-14 lg:px-8">
+        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
+          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"></div>
+        </div>
+
+        <div className="mx-auto max-w-6xl py-32 sm:py-48 lg:py-56">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+              Privacy-First AI Platform
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-gray-300">
+              Process sensitive data locally with our WebGPU-powered chat interface. Enterprise-grade security with uncompromising performance.
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <a
+                href="https://app.veylaai.com/auth/signin"
+                className="rounded-md bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 transition-all duration-200"
+              >
+                Get started
+              </a>
+              <a href="#features" className="text-sm font-semibold leading-6 text-gray-300 hover:text-white">
+                Learn more <span aria-hidden="true">→</span>
+              </a>
+            </div>
           </div>
-        ) : (
-          <a
-            href="https://app.veylaai.com/auth/signin"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Login or Sign Up
-          </a>
-        )}
+        </div>
       </div>
 
-      <div className="flex-1 px-4">
-        <h1 className="text-4xl font-bold text-center mt-20 mb-8">
-          Privacy-First AI Platform
-        </h1>
-        <p className="text-center text-xl mb-12">
-          Process sensitive data locally with our WebGPU-powered chat interface
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mt-16">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="border rounded-lg p-6 hover:shadow-lg transition-shadow"
-            >
-              <feature.icon className="w-12 h-12 text-blue-600 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
+      {/* Features Section */}
+      <div id="features" className="py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center">
+            <h2 className="text-base font-semibold leading-7 text-purple-400">Advanced Security</h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+              Everything you need for secure AI processing
+            </p>
+            <p className="mt-6 text-lg leading-8 text-gray-300">
+              Our platform combines cutting-edge AI with enterprise-grade security features to ensure your data stays protected.
+            </p>
+          </div>
+          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-16 lg:grid-cols-3">
+              {features.map((feature) => (
+                <div key={feature.title} className="flex flex-col items-start bg-gray-900/50 rounded-2xl p-8 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-all duration-300">
+                  <div className="rounded-lg bg-purple-500/10 p-3 ring-1 ring-purple-500/20">
+                    <feature.icon className="h-6 w-6 text-purple-400" aria-hidden="true" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold leading-7 tracking-tight">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-base leading-7 text-gray-300">
+                    {feature.description}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
+      </div>
+
+      {/* Decorative blur */}
+      <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]" aria-hidden="true">
+        <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"></div>
       </div>
     </main>
   );
