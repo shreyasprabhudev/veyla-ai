@@ -94,19 +94,17 @@ export class VeylaStack extends cdk.Stack {
       }),
     });
 
-    // Create S3 bucket for landing page
-    const landingBucket = new s3.Bucket(this, 'LandingBucket', {
-      bucketName: 'veylaai.com',
-      websiteIndexDocument: 'index.html',
-      publicReadAccess: true,
-      blockPublicAccess: new s3.BlockPublicAccess({
-        blockPublicAcls: false,
-        blockPublicPolicy: false,
-        ignorePublicAcls: false,
-        restrictPublicBuckets: false
-      }),
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
+    // Get the hosted zone
+    const hostedZone = route53.HostedZone.fromLookup(this, 'VeylaHostedZone', {
+      domainName: 'veylaai.com',
+    });
+
+    // Create DNS record for app subdomain
+    new route53.ARecord(this, 'DashboardDNS', {
+      zone: hostedZone,
+      recordName: 'app.veylaai.com',
+      target: route53.RecordTarget.fromAlias(new targets.LoadBalancerTarget(alb)),
+      ttl: cdk.Duration.minutes(5),
     });
 
     // Create ECS Task Definition

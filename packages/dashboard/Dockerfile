@@ -58,6 +58,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV PORT 3000
+ENV HOSTNAME localhost
 
 # Copy necessary files from builder
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
@@ -69,9 +71,6 @@ USER nextjs
 
 # Expose port
 EXPOSE 3000
-
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
 
 # Add Docker healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
