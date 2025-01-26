@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 export function HeroButtons() {
   return (
     <div className="mt-10 flex items-center justify-center gap-x-6">
-      <Button
-        href="/dashboard"
+      <a
+        href="https://app.veylaai.com/auth/signin"
         className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold flex items-center gap-2"
       >
         Get Started
@@ -25,14 +25,13 @@ export function HeroButtons() {
             d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
           />
         </svg>
-      </Button>
-      <Button
+      </a>
+      <a
         href="#features"
-        variant="outline"
-        className="text-purple-400 border-purple-400 hover:bg-purple-950"
+        className="text-sm font-semibold leading-6 text-gray-900"
       >
-        Learn more
-      </Button>
+        Learn more <span aria-hidden="true">→</span>
+      </a>
     </div>
   );
 }
