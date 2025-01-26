@@ -21,10 +21,25 @@ export async function GET(request: Request) {
             return cookieStore.get(name)?.value;
           },
           set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
+            // Set cross-subdomain cookies
+            cookieStore.set({
+              name,
+              value,
+              ...options,
+              domain: '.veylaai.com',
+              secure: true,
+              sameSite: 'lax',
+            });
           },
           remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
+            cookieStore.set({
+              name,
+              value: '',
+              ...options,
+              domain: '.veylaai.com',
+              secure: true,
+              sameSite: 'lax',
+            });
           },
         },
       }
@@ -40,6 +55,18 @@ export async function GET(request: Request) {
       }
 
       console.log('✅ Session exchange successful');
+      
+      // Set an additional session cookie for the landing page
+      cookieStore.set({
+        name: 'session',
+        value: 'true',
+        domain: '.veylaai.com',
+        path: '/',
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+      });
+
       return NextResponse.redirect(new URL(next, request.url));
     } catch (error: any) {
       console.error('❌ Auth callback error:', error.message);
@@ -49,8 +76,8 @@ export async function GET(request: Request) {
     }
   }
 
-  console.error('❌ No code provided in callback');
+  console.error('❌ No code provided');
   return NextResponse.redirect(
-    new URL('/auth/auth-error?error=No+authorization+code+provided', request.url)
+    new URL('/auth/auth-error?error=No+code+provided', request.url)
   );
 }

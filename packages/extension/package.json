@@ -9,5 +9,9 @@
   },
   "devDependencies": {
     "sharp": "^0.33.1"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs-converter": "4.22.0",
+    "@tensorflow/tfjs-core": "4.22.0"
   }
 }

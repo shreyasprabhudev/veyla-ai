@@ -1,0 +1,60 @@
+.opaque-ai-highlight {
+  border-bottom: 2px solid #7C3AED;
+  background: rgba(124, 58, 237, 0.1);
+  transition: background-color 0.2s;
+  cursor: pointer;
+  display: inline;
+}
+
+.opaque-ai-tooltip {
+  position: fixed;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  max-width: 320px;
+  z-index: 2147483647;
+  font-family: system-ui, -apple-system, sans-serif;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.opaque-ai-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.opaque-ai-proceed {
+  padding: 4px 12px;
+  background: #7C3AED;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.opaque-ai-edit {
+  padding: 4px 12px;
+  background: white;
+  color: #1F2937;
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.opaque-ai-warning-icon {
+  background: #7C3AED;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
