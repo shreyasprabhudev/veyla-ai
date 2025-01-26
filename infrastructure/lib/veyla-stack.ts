@@ -64,7 +64,9 @@ export class VeylaStack extends cdk.Stack {
       { key: 'routing.http.preserve_host_header.enabled', value: 'true' },
       { key: 'routing.http.xff_header_processing.mode', value: 'append' },
       { key: 'routing.http.x_amzn_tls_version_and_cipher_suite.enabled', value: 'true' },
-      { key: 'routing.http.drop_invalid_header_fields.enabled', value: 'true' }
+      { key: 'routing.http.drop_invalid_header_fields.enabled', value: 'true' },
+      { key: 'routing.http.desync_mitigation_mode', value: 'defensive' },
+      { key: 'routing.http2.enabled', value: 'true' }
     ];
 
     // Create target group with custom health check
@@ -84,15 +86,24 @@ export class VeylaStack extends cdk.Stack {
       deregistrationDelay: cdk.Duration.seconds(30),
     });
 
+    // Add custom header rules
+    const cfnTargetGroup = targetGroup.node.defaultChild as elbv2.CfnTargetGroup;
+    cfnTargetGroup.addPropertyOverride('TargetGroupAttributes', [
+      { Key: 'stickiness.enabled', Value: 'true' },
+      { Key: 'stickiness.type', Value: 'app_cookie' },
+      { Key: 'stickiness.app_cookie.cookie_name', Value: 'sb-session' }, // Match Supabase cookie name
+      { Key: 'stickiness.app_cookie.duration_seconds', Value: '86400' }
+    ]);
+
     // Create HTTPS Listener with custom header rules
     const httpsListener = alb.addListener('HttpsListener', {
       port: 443,
       protocol: elbv2.ApplicationProtocol.HTTPS,
-      certificates: [elbv2.ListenerCertificate.fromArn(process.env.ACM_CERTIFICATE_ARN)],
+      certificates: [certificate],
       defaultTargetGroups: [targetGroup],
     });
 
-    // Add host-based routing rule
+    // Add host-based routing rule with custom headers
     httpsListener.addAction('HostBasedRouting', {
       priority: 1,
       conditions: [
@@ -103,14 +114,8 @@ export class VeylaStack extends cdk.Stack {
       })
     });
 
-    // Add custom header rules
-    const cfnTargetGroup = targetGroup.node.defaultChild as elbv2.CfnTargetGroup;
-    cfnTargetGroup.addPropertyOverride('TargetGroupAttributes', [
-      { Key: 'stickiness.enabled', Value: 'true' },
-      { Key: 'stickiness.type', Value: 'app_cookie' },
-      { Key: 'stickiness.app_cookie.cookie_name', Value: 'session' },
-      { Key: 'stickiness.app_cookie.duration_seconds', Value: '86400' }
-    ]);
+    // Modify headers on the target group
+    targetGroup.setAttribute('preserve_client_ip.enabled', 'true');
 
     // Create HTTP Listener that redirects to HTTPS
     alb.addListener('HttpListener', {
@@ -185,12 +190,8 @@ export class VeylaStack extends cdk.Stack {
         DOMAIN_NAME: 'veylaai.com',
         DEBUG: '*',  // Enable all debug logs
         NEXT_PUBLIC_SUPABASE_REDIRECT_URL: 'https://app.veylaai.com/auth/callback',
-        ...(process.env.NEXT_PUBLIC_SUPABASE_URL && { 
-          NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL 
-        }),
-        ...(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && { 
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
-        })
+        NEXT_PUBLIC_SUPABASE_URL: supabaseUrlParam?.stringValue || '',
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKeyParam?.stringValue || ''
       },
       healthCheck: {
         command: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health || exit 1'],

@@ -42,6 +42,11 @@ RUN npm run build && \
 # Production stage
 FROM --platform=linux/amd64 node:18.19.0-alpine AS runner
 
+# Define build args again for runtime stage
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_APP_URL
+
 # Add production dependencies and security updates
 RUN apk update && \
     apk upgrade && \

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
   if (!code) {
     console.error('❌ No code provided in callback');
-    return NextResponse.redirect(`${appUrl}/auth/error`);
+    return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent('No authorization code provided')}`);
   }
 
   const supabase = createServerClient(
@@ -92,13 +92,13 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       console.error('🔴 Error exchanging code for session:', error);
-      return NextResponse.redirect(`${appUrl}/auth/error`);
+      return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent(error.message)}`);
     }
 
     console.log('✅ Successfully exchanged code for session');
     return NextResponse.redirect(`${appUrl}${next}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error('🔴 Error in callback:', error);
-    return NextResponse.redirect(`${appUrl}/auth/error`);
+    return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent(error.message || 'An unexpected error occurred')}`);
   }
 }
