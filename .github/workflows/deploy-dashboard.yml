@@ -22,7 +22,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: npm
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install Dependencies
+        run: |
+          cd ../../  # Go to root directory
+          npm ci     # Install root dependencies
+          cd packages/dashboard
+          npm ci     # Install dashboard dependencies
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -30,9 +38,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Install Dependencies
-        run: npm ci
 
       - name: Build
         run: npm run build
