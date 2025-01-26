@@ -15,10 +15,6 @@ jobs:
       contents: read
       deployments: write
 
-    defaults:
-      run:
-        working-directory: packages/landing
-
     steps:
       - uses: actions/checkout@v3
 
@@ -27,12 +23,19 @@ jobs:
         with:
           node-version: 18
           cache: npm
-          cache-dependency-path: packages/landing/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            packages/landing/package-lock.json
 
-      - name: Install Dependencies
+      - name: Install Root Dependencies
+        run: npm ci
+
+      - name: Install Landing Page Dependencies
+        working-directory: packages/landing
         run: npm ci
 
       - name: Build
+        working-directory: packages/landing
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
