@@ -11,9 +11,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/dashboard
 
     steps:
       - uses: actions/checkout@v3
@@ -22,15 +19,23 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
 
-      - name: Install Dependencies
-        run: |
-          cd ../../  # Go to root directory
-          npm ci     # Install root dependencies
-          cd packages/dashboard
-          npm ci     # Install dashboard dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Root Dependencies
+        run: npm ci
+        
+      - name: Install Dashboard Dependencies
+        working-directory: packages/dashboard
+        run: npm ci
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -39,7 +44,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Build
+      - name: Build Dashboard
+        working-directory: packages/dashboard
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -47,6 +53,7 @@ jobs:
           NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
 
       - name: Deploy to AWS
+        working-directory: packages/dashboard
         run: |
           # Install AWS CLI if not already installed
           if ! command -v aws &> /dev/null; then
