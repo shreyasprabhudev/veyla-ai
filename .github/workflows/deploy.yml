@@ -1,9 +1,12 @@
-name: Deploy to Cloudflare Pages
+name: Deploy Landing Page to Cloudflare Pages
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'packages/landing/**'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   deploy:
@@ -11,6 +14,10 @@ jobs:
     permissions:
       contents: read
       deployments: write
+
+    defaults:
+      run:
+        working-directory: packages/landing
 
     steps:
       - uses: actions/checkout@v3
@@ -20,6 +27,7 @@ jobs:
         with:
           node-version: 18
           cache: npm
+          cache-dependency-path: packages/landing/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
@@ -32,4 +40,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ./packages/dashboard/.next --project-name=veyla-ai
+          command: pages deploy ./.next --project-name=veyla-ai
+          workingDirectory: packages/landing
