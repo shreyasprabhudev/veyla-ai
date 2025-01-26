@@ -4,6 +4,15 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  
+  // Debug logging
+  console.log('🔍 Full request URL:', request.url);
+  console.log('🔍 Request headers:', Object.fromEntries(request.headers));
+  console.log('🔍 Environment:', {
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    HOSTNAME: process.env.HOSTNAME,
+  });
+  
   const code = requestUrl.searchParams.get('code');
   const next = requestUrl.searchParams.get('next') ?? '/dashboard';
 

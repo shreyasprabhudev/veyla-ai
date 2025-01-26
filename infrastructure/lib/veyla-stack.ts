@@ -136,7 +136,14 @@ export class VeylaStack extends cdk.Stack {
       image: ecs.ContainerImage.fromAsset('../packages/dashboard', {
         buildArgs: {
           BUILDPLATFORM: 'linux/amd64',
-          TARGETPLATFORM: 'linux/amd64'
+          TARGETPLATFORM: 'linux/amd64',
+          NEXT_PUBLIC_APP_URL: 'https://app.veylaai.com',
+          ...(process.env.NEXT_PUBLIC_SUPABASE_URL && { 
+            NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL 
+          }),
+          ...(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && { 
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
+          })
         }
       }),
       memoryLimitMiB: 2048,
@@ -144,13 +151,16 @@ export class VeylaStack extends cdk.Stack {
       environment: {
         NODE_ENV: 'production',
         PORT: '3000',
-        HOSTNAME: '0.0.0.0',  // Required for Next.js
         NEXT_TELEMETRY_DISABLED: '1',
         NEXT_PUBLIC_APP_URL: 'https://app.veylaai.com',
         DOMAIN_NAME: 'veylaai.com',
         DEBUG: '*',  // Enable all debug logs
-        ...(process.env.NEXT_PUBLIC_SUPABASE_URL && { NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL }),
-        ...(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && { NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY })
+        ...(process.env.NEXT_PUBLIC_SUPABASE_URL && { 
+          NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL 
+        }),
+        ...(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && { 
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
+        })
       },
       healthCheck: {
         command: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health || exit 1'],

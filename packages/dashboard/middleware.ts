@@ -3,9 +3,20 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
+  // Debug logging
+  console.log('🔍 Middleware request URL:', req.url);
+  console.log('🔍 Middleware headers:', Object.fromEntries(req.headers));
+  console.log('🔍 Environment:', {
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    HOSTNAME: process.env.HOSTNAME,
+  });
+
   // Get the app URL from environment variable
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  console.log(' App URL:', appUrl);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    console.error('❌ NEXT_PUBLIC_APP_URL is not set');
+    throw new Error('NEXT_PUBLIC_APP_URL is required');
+  }
 
   // Bypass /api or /_next
   if (req.nextUrl.pathname.startsWith('/api') || 
@@ -31,6 +42,8 @@ export async function middleware(req: NextRequest) {
             value,
             ...options,
             domain: '.veylaai.com',
+            secure: true,
+            sameSite: 'lax',
           });
         },
         remove(name: string, options: any) {
@@ -39,6 +52,8 @@ export async function middleware(req: NextRequest) {
             value: '',
             ...options,
             domain: '.veylaai.com',
+            secure: true,
+            sameSite: 'lax',
           });
         },
       },
@@ -52,11 +67,13 @@ export async function middleware(req: NextRequest) {
   // If user is not logged in and tries to access a protected route,
   // redirect to /auth/signin
   if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
+    console.log('🔒 No session, redirecting to signin');
     return NextResponse.redirect(new URL('/auth/signin', appUrl));
   }
 
   // If user is logged in and visits /auth/signin, redirect to dashboard
-  if (session && req.nextUrl.pathname.startsWith('/auth/signin')) {
+  if (session && req.nextUrl.pathname.startsWith('/auth')) {
+    console.log('✅ Session exists, redirecting to dashboard');
     return NextResponse.redirect(new URL('/dashboard', appUrl));
   }
 
