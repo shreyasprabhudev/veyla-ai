@@ -11,13 +11,13 @@ const supabase = createBrowserClient(
       autoRefreshToken: true,
       detectSessionInUrl: true,
       persistSession: true,
-    },
-    cookies: {
-      name: 'sb-session',
-      domain: '.veylaai.com',
-      path: '/',
-      sameSite: 'lax',
-      secure: true
+      cookieOptions: {
+        name: 'sb-session',
+        domain: '.veylaai.com',
+        path: '/',
+        sameSite: 'lax',
+        secure: true
+      }
     }
   }
 );
