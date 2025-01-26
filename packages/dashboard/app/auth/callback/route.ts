@@ -10,6 +10,10 @@ export async function GET(request: Request) {
   console.log('🔄 Processing OAuth callback');
   console.log('📍 Next URL:', next);
 
+  // Get the app URL from environment variable
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  console.log('🌐 App URL:', appUrl);
+
   if (code) {
     const cookieStore = cookies();
     const supabase = createServerClient(
@@ -67,17 +71,18 @@ export async function GET(request: Request) {
         maxAge: 60 * 60 * 24 * 7, // 1 week
       });
 
-      return NextResponse.redirect(new URL(next, request.url));
+      // Use the app URL for redirects
+      return NextResponse.redirect(new URL(next, appUrl));
     } catch (error: any) {
       console.error('❌ Auth callback error:', error.message);
       return NextResponse.redirect(
-        new URL(`/auth/auth-error?error=${encodeURIComponent(error.message)}`, request.url)
+        new URL(`/auth/auth-error?error=${encodeURIComponent(error.message)}`, appUrl)
       );
     }
   }
 
   console.error('❌ No code provided');
   return NextResponse.redirect(
-    new URL('/auth/auth-error?error=No+code+provided', request.url)
+    new URL('/auth/auth-error?error=No+code+provided', appUrl)
   );
 }
