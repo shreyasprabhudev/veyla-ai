@@ -7,6 +7,11 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Get the app URL from environment, fallback to window.location.origin for development
+const getAppUrl = () => {
+  return process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+};
+
 export async function signInWithEmail(email: string, password: string) {
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -22,7 +27,7 @@ export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: `${getAppUrl()}/auth/callback`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -40,7 +45,7 @@ export async function signUp(email: string, password: string) {
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      emailRedirectTo: `${getAppUrl()}/auth/callback`,
     },
   });
 

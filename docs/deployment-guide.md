@@ -5,21 +5,24 @@
 ```mermaid
 graph TD
     subgraph Cloudflare
-        CF[Cloudflare Pages]
+        CF[Cloudflare Pages] --> Landing[Landing Page]
         DNS[Cloudflare DNS]
         CDN[Cloudflare CDN]
     end
 
     subgraph AWS Infrastructure
-        ALB[Application Load Balancer]
+        ECR[Amazon ECR]
         ECS[ECS Cluster]
-        VPC[VPC]
+        subgraph ECS Service
+            Container[Dashboard Container]
+        end
     end
 
+    GitHub[GitHub Actions] --> ECR
+    ECR --> ECS
     DNS --> CF
     DNS --> CDN
-    CDN --> ALB
-    ALB --> ECS
+    CDN --> ECS
 ```
 
 ## Current Setup
@@ -30,66 +33,104 @@ graph TD
    - Protected by Cloudflare CDN
 
 2. **Dashboard (app.veylaai.com)**
-   - Load Balancer: VeylaS-Veyla-wt03F2Rvg8eo-514118397.us-east-2.elb.amazonaws.com
-   - Infrastructure deployed on AWS
-   - Traffic proxied through Cloudflare
+   - Container Registry: Amazon ECR (veyla-dashboard)
+   - Compute: AWS ECS Fargate
+   - Cluster: VeylaStack-VeylaClusterBA05EB56-YlYM8byJoP7n
+   - Service: VeylaStack-DashboardService73233129-yBxSXJ9iveDw
 
-3. **DNS Configuration**
-   - Managed by Cloudflare
-   - Landing page: CNAME to veyla-ai.pages.dev
-   - Dashboard: CNAME to AWS ALB
+3. **Deployment Pipeline**
+   - Triggered on pushes to main branch
+   - Builds Docker image with Next.js application
+   - Pushes to Amazon ECR
+   - Updates ECS service for deployment
 
-## Remaining Work
+4. **Environment Variables**
+   - NEXT_PUBLIC_SUPABASE_URL
+   - NEXT_PUBLIC_SUPABASE_ANON_KEY
+   - NEXT_PUBLIC_APP_URL
+   - Stored in GitHub Secrets
+   - Passed to container during build
 
-### High Priority
-1. **Dashboard Deployment**
-   - Complete ECS service configuration
-   - Set up container deployment pipeline
-   - Configure environment variables
-   - Set up health checks
+## AWS Resources
 
-2. **Security**
-   - Configure HTTPS listeners on ALB
-   - Set up AWS WAF (if needed)
-   - Review security group rules
-   - Implement proper logging
+### Container Registry (ECR)
+- Repository: veyla-dashboard
+- Features:
+  - Image scanning enabled
+  - AES256 encryption
+  - Immutable tags
 
-3. **Monitoring**
-   - Set up CloudWatch alarms
-   - Configure performance monitoring
-   - Set up error tracking
-   - Create dashboard for key metrics
+### ECS Configuration
+- Launch Type: Fargate
+- Networking: VPC with public subnets
+- Port: 3000 (Next.js default)
 
-### Future Improvements
-1. **Scalability**
-   - Implement auto-scaling for ECS
-   - Configure load balancer thresholds
-   - Set up performance testing
+### GitHub Actions Workflow
+Located in `.github/workflows/deploy-dashboard.yml`:
+1. Configures AWS credentials
+2. Creates ECR repository if needed
+3. Builds and pushes Docker image
+4. Updates ECS service
 
-2. **Development Workflow**
-   - Create staging environment
-   - Set up CI/CD pipeline for dashboard
-   - Implement automated testing
+## Current Status
 
-3. **Cost Optimization**
-   - Review resource utilization
-   - Set up cost alerts
-   - Optimize instance sizes
+### Completed
+- ECR repository setup
+- Docker image build pipeline
+- ECS deployment workflow
+- Environment variable configuration
+
+### In Progress
+- Health check implementation
+- Logging configuration
+- Monitoring setup
+
+### Pending
+- Auto-scaling configuration
+- Staging environment
+- Performance optimization
+- Cost monitoring
 
 ## Quick Reference
 
 ### Important URLs
 - Landing Page: https://veylaai.com
-- Dashboard: https://app.veylaai.com (once DNS propagates)
-- ALB DNS: VeylaS-Veyla-wt03F2Rvg8eo-514118397.us-east-2.elb.amazonaws.com
+- Dashboard: https://app.veylaai.com
+- Container Registry: 311141528083.dkr.ecr.us-east-2.amazonaws.com/veyla-dashboard
 
 ### AWS Resources
 - Region: us-east-2
-- VPC ID: vpc-0dee1aa0364150885
-- Load Balancer: VeylaS-Veyla-wt03F2Rvg8eo
+- ECR Repository: veyla-dashboard
+- ECS Cluster: VeylaStack-VeylaClusterBA05EB56-YlYM8byJoP7n
+- ECS Service: VeylaStack-DashboardService73233129-yBxSXJ9iveDw
 
-### Cloudflare Configuration
-- SSL/TLS: Full (Strict)
-- Always Use HTTPS: Yes
-- Auto Minify: Enabled
-- Brotli: Enabled
+### Required Permissions
+AWS IAM permissions needed:
+- ecr:*
+- ecs:*
+- logs:*
+- ec2:DescribeVpcs
+- ec2:DescribeSubnets
+- ec2:DescribeSecurityGroups
+
+## Next Steps
+
+1. **Monitoring & Observability**
+   - Set up CloudWatch dashboards
+   - Configure alarms for key metrics
+   - Implement structured logging
+
+2. **Performance**
+   - Implement auto-scaling
+   - Optimize container resources
+   - Set up performance monitoring
+
+3. **Security**
+   - Review security group rules
+   - Implement AWS WAF
+   - Set up audit logging
+
+4. **Cost Optimization**
+   - Set up cost alerts
+   - Review resource utilization
+   - Optimize container sizing

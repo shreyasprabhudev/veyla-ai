@@ -1,116 +1,168 @@
 # ECS Deployment Plan for Veyla Dashboard
 
-## Cost-Optimized MVP Infrastructure
+## Current Infrastructure
 
-### Estimated Monthly Costs
-- ECS Fargate Spot: ~$10-15
-- Application Load Balancer: ~$20
-- CloudWatch Logs: <$5
-- Total: ~$35-40/month
+### Components
+1. **ECS Cluster**
+   - Name: VeylaStack-VeylaClusterBA05EB56-YlYM8byJoP7n
+   - Type: Fargate
+   - Region: us-east-2
 
-### Infrastructure Components
+2. **ECS Service**
+   - Name: VeylaStack-DashboardService73233129-yBxSXJ9iveDw
+   - Task Definition: Next.js application
+   - Port: 3000
 
-1. **ECS Task Definition**
-```typescript
-// Minimal resource configuration
-{
-  cpu: 256,        // 0.25 vCPU
-  memory: 512,     // 0.5GB RAM
-  spot: true,      // Use Spot instances for cost savings
-  containers: {
-    dashboard: {
-      port: 3000,
-      healthCheck: '/api/health'
-    }
-  }
-}
+3. **ECR Repository**
+   - Name: veyla-dashboard
+   - Features:
+     - Image scanning
+     - AES256 encryption
+     - Immutable tags
+
+### Deployment Pipeline
+```mermaid
+graph LR
+    GH[GitHub] --> |Push to main| Actions[GitHub Actions]
+    Actions --> |Build| Docker[Docker Image]
+    Docker --> |Push| ECR[Amazon ECR]
+    ECR --> |Deploy| ECS[ECS Service]
 ```
 
-2. **Security Groups**
-```typescript
-// ALB -> ECS traffic only
+## Resource Configuration
+
+### ECS Task Definition
+```json
 {
-  inbound: {
-    port: 3000,
-    source: 'ALB Security Group'
-  }
-}
-```
-
-3. **Networking**
-- Private subnets for ECS tasks
-- Public subnets for ALB
-- NAT Gateway for outbound traffic
-
-## Implementation Steps
-
-### Phase 1: Infrastructure Setup
-1. Create new branch for ECS implementation
-2. Add ECS service configuration to existing stack
-3. Test deployment in separate environment
-4. Review and optimize costs
-
-### Phase 2: Application Updates
-1. Add health check endpoint
-2. Configure environment variables
-3. Create Docker build pipeline
-4. Test container locally
-
-### Phase 3: Deployment
-1. Deploy infrastructure changes
-2. Monitor health checks
-3. Set up logging
-4. Configure alarms
-
-## Cost Control Measures
-
-### AWS Budget Alerts
-```typescript
-// Example budget configuration
-{
-  amount: 50,           // USD
-  timeUnit: 'MONTHLY',
-  alerts: [
-    { threshold: 80,    // Alert at 80% of budget
-      email: 'your@email.com'
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "dashboard",
+      "image": "311141528083.dkr.ecr.us-east-2.amazonaws.com/veyla-dashboard:latest",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NEXT_PUBLIC_SUPABASE_URL",
+          "value": "from_github_secrets"
+        },
+        {
+          "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+          "value": "from_github_secrets"
+        },
+        {
+          "name": "NEXT_PUBLIC_APP_URL",
+          "value": "from_github_secrets"
+        }
+      ]
     }
   ]
 }
 ```
 
-### Resource Optimization
-1. Use Fargate Spot (up to 70% savings)
-2. Minimal initial resources
-3. No auto-scaling in MVP
-4. Optimize health check frequency
+## Deployment Workflow
 
-## Rollback Plan
+### Current GitHub Actions Workflow
+Located in `.github/workflows/deploy-dashboard.yml`:
+1. Configure AWS credentials
+2. Create ECR repository if needed
+3. Build and tag Docker image
+4. Push to ECR
+5. Update ECS service
+
+### Required Secrets
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- NEXT_PUBLIC_APP_URL
+
+## Next Steps
+
+### Phase 1: Monitoring
+1. **Health Checks**
+   ```typescript
+   // Add to task definition
+   healthCheck: {
+     command: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"],
+     interval: 30,
+     timeout: 5,
+     retries: 3
+   }
+   ```
+
+2. **CloudWatch Logs**
+   ```typescript
+   // Add to task definition
+   logConfiguration: {
+     logDriver: "awslogs",
+     options: {
+       "awslogs-group": "/ecs/veyla-dashboard",
+       "awslogs-region": "us-east-2",
+       "awslogs-stream-prefix": "ecs"
+     }
+   }
+   ```
+
+### Phase 2: Auto-scaling
+1. **Service Auto-scaling**
+   ```typescript
+   // Target tracking policy
+   {
+     targetValue: 75,
+     scaleOutCooldown: 300,
+     scaleInCooldown: 300,
+     predefinedMetric: "ECSServiceAverageCPUUtilization"
+   }
+   ```
+
+2. **Capacity Limits**
+   - Minimum: 1 task
+   - Maximum: 4 tasks
+   - Desired: 1 task
+
+### Phase 3: Cost Optimization
+1. **Resource Monitoring**
+   - Track CPU utilization
+   - Monitor memory usage
+   - Review scaling patterns
+
+2. **Budget Alerts**
+   ```typescript
+   {
+     amount: 100,
+     timeUnit: "MONTHLY",
+     alerts: [
+       { threshold: 80, email: "team@veylaai.com" }
+     ]
+   }
+   ```
+
+## Rollback Strategy
 
 ### Quick Rollback Steps
-1. Keep existing Cloudflare Pages deployment
-2. Maintain current DNS configuration
-3. Easy switch back if needed
+1. Revert to previous task definition
+   ```bash
+   aws ecs update-service \
+     --cluster VeylaStack-VeylaClusterBA05EB56-YlYM8byJoP7n \
+     --service VeylaStack-DashboardService73233129-yBxSXJ9iveDw \
+     --task-definition PREVIOUS_TASK_DEF
+   ```
 
-### Monitoring Points
-1. Container health
-2. Memory usage
-3. CPU utilization
-4. Response times
+2. Monitor deployment
+   ```bash
+   aws ecs describe-services \
+     --cluster VeylaStack-VeylaClusterBA05EB56-YlYM8byJoP7n \
+     --services VeylaStack-DashboardService73233129-yBxSXJ9iveDw
+   ```
 
-## Future Optimizations
-
-### Phase 1 (Post-MVP)
-1. Auto-scaling based on metrics
-2. Performance monitoring
-3. Cost optimization
-
-### Phase 2 (Scale)
-1. CDN integration
-2. Multi-region deployment
-3. Backup strategy
-
-## Notes
-- All changes will be made in a separate branch
-- Testing in staging before production
-- No disruption to current setup
-- Easy rollback path available
+### Emergency Procedures
+1. Scale down to 0 if needed
+2. Check CloudWatch logs
+3. Review error patterns
+4. Notify team via Slack

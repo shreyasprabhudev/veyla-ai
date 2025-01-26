@@ -3,17 +3,23 @@
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 
+// Get the app URL from environment, fallback to window.location.origin for development
+const getAppUrl = () => {
+  return process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+};
+
 export function GoogleSignInButton() {
   const supabase = createClient();
 
   const handleGoogleSignIn = async () => {
     console.log('🔵 Starting Google OAuth flow');
+    console.log('🔵 Redirect URL:', `${getAppUrl()}/auth/callback');
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${getAppUrl()}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
