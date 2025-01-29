@@ -1,28 +1,45 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 
-export async function GET() {
-  const headersList = headers();
-  const host = headersList.get('host') || 'unknown';
-  const userAgent = headersList.get('user-agent') || 'unknown';
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
-  return NextResponse.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    environment: {
-      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-      NODE_ENV: process.env.NODE_ENV,
-    },
-    request: {
-      host,
-      userAgent,
-    }
-  }, { 
-    status: 200,
-    headers: {
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
-    }
+export async function GET(request: Request) {
+  const userAgent = request.headers.get('user-agent') || '';
+  const host = request.headers.get('host') || '';
+  
+  // Log the request details for debugging
+  console.log('Health check request:', {
+    userAgent,
+    host,
+    url: request.url
   });
+
+  // Special handling for ELB health checker
+  if (userAgent.includes('ELB-HealthChecker')) {
+    return new NextResponse(
+      JSON.stringify({ status: 'healthy', type: 'elb' }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          // Prevent caching for health checks
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      }
+    );
+  }
+
+  // Regular health check response
+  return new NextResponse(
+    JSON.stringify({ status: 'healthy', type: 'regular' }),
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    }
+  );
 }

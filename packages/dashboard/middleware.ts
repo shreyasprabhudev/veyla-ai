@@ -2,23 +2,21 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const getBaseUrl = () => {
+  // Always use HTTPS in production
+  const protocol = process.env.NODE_ENV === 'production' ? 'https://' : 'http://';
+  // Always use app.veylaai.com in production
+  const host = process.env.NODE_ENV === 'production' ? 'app.veylaai.com' : process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
+  return `${protocol}${host}`;
+};
+
 export async function middleware(req: NextRequest) {
   try {
-    // Get app URL from environment
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (!appUrl) {
-      console.error('❌ NEXT_PUBLIC_APP_URL is not set');
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-
     // Debug logging with request details
     const forwardedHost = req.headers.get('x-forwarded-host');
     const currentHost = forwardedHost ?? req.headers.get('host') ?? '';
     const userAgent = req.headers.get('user-agent') ?? '';
-    const forwardedProto = req.headers.get('x-forwarded-proto') ?? req.nextUrl.protocol;
+    const forwardedProto = req.headers.get('x-forwarded-proto');
     const origin = req.headers.get('origin') ?? '';
 
     console.log('🔍 Request Details:', {
@@ -31,13 +29,10 @@ export async function middleware(req: NextRequest) {
       origin,
       userAgent,
       env: {
-        NEXT_PUBLIC_APP_URL: appUrl,
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
         NODE_ENV: process.env.NODE_ENV,
       }
     });
-
-    const appUrlObj = new URL(appUrl);
-    const requestUrl = req.nextUrl.clone();
 
     // Allow Supabase and Google OAuth callbacks to proceed
     const isOAuthCallback = (
@@ -66,9 +61,12 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
+    const baseUrl = getBaseUrl();
+    const expectedHost = new URL(baseUrl).host;
+
     // If the request is not coming from the correct host, redirect
     const isLocalhost = currentHost?.includes('localhost');
-    const isCorrectHost = currentHost === appUrlObj.host;
+    const isCorrectHost = currentHost === expectedHost;
     const isInternalIP = currentHost?.includes('0.0.0.0') || 
                         currentHost?.match(/^(\d{1,3}\.){3}\d{1,3}/);
     const isSupabaseHost = currentHost?.includes('supabase');
@@ -76,27 +74,17 @@ export async function middleware(req: NextRequest) {
     if (!isCorrectHost && !isLocalhost && !isInternalIP && !isSupabaseHost) {
       console.log('🔄 Redirecting to correct host:', {
         from: currentHost,
-        to: appUrlObj.host,
-        path: requestUrl.pathname
+        to: expectedHost,
+        path: req.nextUrl.pathname
       });
 
-      // Ensure we're using the correct protocol and host
-      requestUrl.protocol = appUrlObj.protocol;
-      requestUrl.host = appUrlObj.host;
-      requestUrl.port = '';  // Clear any port number
-      
-      const response = NextResponse.redirect(requestUrl);
-      
-      // Set secure headers
-      response.headers.set('X-Forwarded-Host', appUrlObj.host);
-      response.headers.set('X-Forwarded-Proto', appUrlObj.protocol.replace(':', ''));
-      
-      return response;
+      const redirectUrl = new URL(req.nextUrl.pathname + req.nextUrl.search, baseUrl);
+      return NextResponse.redirect(redirectUrl);
     }
 
     const res = NextResponse.next();
 
-    // Configure Supabase client with secure cookie settings
+    // Configure Supabase client
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -110,7 +98,6 @@ export async function middleware(req: NextRequest) {
               name,
               value,
               ...options,
-              // Allow cookies to work across subdomains
               domain: '.veylaai.com',
               secure: true,
               sameSite: 'lax',
@@ -150,12 +137,12 @@ export async function middleware(req: NextRequest) {
     
     if (!session && !isAuthPath) {
       console.log('🔒 No session, redirecting to signin');
-      return NextResponse.redirect(new URL('/auth/signin', appUrl));
+      return NextResponse.redirect(new URL('/auth/signin', baseUrl));
     }
 
     if (session && isAuthPath && req.nextUrl.pathname !== '/auth/callback') {
       console.log('✅ Session exists, redirecting to dashboard');
-      return NextResponse.redirect(new URL('/dashboard', appUrl));
+      return NextResponse.redirect(new URL('/dashboard', baseUrl));
     }
 
     // Set secure headers
