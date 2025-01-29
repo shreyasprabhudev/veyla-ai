@@ -25,36 +25,32 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     HOSTNAME=0.0.0.0
 
 # Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
+COPY package.json package-lock.json ./
+COPY tsconfig*.json ./
 COPY next.config.js ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build application
-RUN npm run build && \
-    ls -la .next/ && \
-    echo "Checking standalone directory:" && \
-    ls -la .next/standalone/ && \
-    test -f .next/standalone/server.js && \
-    npm prune --production
+RUN npm run build
 
 # Production stage
 FROM --platform=linux/amd64 node:20.11.0-alpine AS runner
 
 WORKDIR /app
 
-# Create a non-root user
+# Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
 COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./
-COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/package-lock.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
@@ -70,10 +66,8 @@ ENV NODE_ENV=production \
 # Switch to non-root user
 USER nextjs
 
-# Expose port
 EXPOSE 3000
 
-# Add Docker healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
