@@ -19,12 +19,29 @@ export const createClient = () => {
       autoRefreshToken: true,
       detectSessionInUrl: true,
       persistSession: true,
-      cookieOptions: {
-        name: 'sb-auth-token',
-        domain: '.veylaai.com',
-        path: '/',
-        sameSite: 'lax',
-        secure: true
+      storage: {
+        getItem: (key) => {
+          try {
+            const storedValue = localStorage.getItem(key);
+            return storedValue;
+          } catch {
+            return null;
+          }
+        },
+        setItem: (key, value) => {
+          try {
+            localStorage.setItem(key, value);
+          } catch (error) {
+            console.error('Error setting storage item:', error);
+          }
+        },
+        removeItem: (key) => {
+          try {
+            localStorage.removeItem(key);
+          } catch (error) {
+            console.error('Error removing storage item:', error);
+          }
+        },
       }
     },
     global: {

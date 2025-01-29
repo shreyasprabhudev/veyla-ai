@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import type { CookieOptions } from '@supabase/ssr';
 
 const enforceHttps = (url: string) => {
   if (!url) return url;
@@ -23,7 +24,7 @@ export const createServerSupabaseClient = () => {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ 
               name, 
@@ -38,7 +39,7 @@ export const createServerSupabaseClient = () => {
             console.error('Failed to set cookie:', error);
           }
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ 
               name, 
