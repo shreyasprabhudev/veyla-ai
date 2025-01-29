@@ -24,13 +24,15 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Copy package.json first
+COPY package.json ./
+
+# Copy configuration files
 COPY tsconfig*.json ./
 COPY next.config.js ./
 
 # Install dependencies
-RUN npm install --frozen-lockfile
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -50,7 +52,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Copy necessary files from builder
 COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nextjs:nodejs /app/package-lock.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
