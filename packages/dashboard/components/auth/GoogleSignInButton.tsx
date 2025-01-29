@@ -28,19 +28,18 @@ export function GoogleSignInButton() {
   const handleGoogleSignIn = async () => {
     try {
       const appUrl = getAppUrl();
-      const redirectTo = `${appUrl}/auth/callback`;
-      console.log('🔵 Starting OAuth flow with redirect:', redirectTo);
+      // Let Supabase handle the initial callback
+      console.log('🔵 Starting OAuth flow');
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo,
+          // Don't set redirectTo here - let Supabase handle the initial callback
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-            hd: 'veylaai.com', // Optional: restrict to your domain
           },
-          scopes: 'email profile',
+          redirectTo: `${appUrl}/auth/callback`, // This will be used after Supabase processes the callback
         },
       });
 

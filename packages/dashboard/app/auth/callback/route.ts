@@ -1,87 +1,65 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextResponse, type NextRequest } from 'next/server'
-import type { CookieOptions } from '@supabase/ssr'
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
-export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const cookieStore = cookies()
-
-  // Debug logging
-  console.log('🔍 Incoming request URL:', request.url)
-  console.log('🔍 Headers:', Object.fromEntries(request.headers))
-
-  const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
+export async function GET(request: Request) {
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get('code');
+  const next = requestUrl.searchParams.get('next') || '/dashboard';
   
+  // If there's no code, this isn't a valid callback
   if (!code) {
-    // If no code, redirect to an error page or re-initiate sign-in
-    console.error('❌ No authorization code provided')
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/auth/error?error=${encodeURIComponent('No code provided')}`)
+    console.error('No code provided in callback');
+    return NextResponse.redirect(new URL('/auth/signin', requestUrl.origin));
   }
 
-  // Derive appUrl for final redirect
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.veylaai.com'
-
-  // Initialize Supabase client with custom cookie handling
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({
-              name,
-              value,
-              domain: '.veylaai.com', // ensure subdomain usage
-              path: '/',
-              secure: true,
-              httpOnly: true,
-              sameSite: 'lax',
-              ...options
-            })
-          } catch (error) {
-            console.error('🔴 Error setting cookie:', error)
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({
-              name,
-              value: '',
-              domain: '.veylaai.com',
-              path: '/',
-              secure: true,
-              httpOnly: true,
-              sameSite: 'lax',
-              maxAge: 0,
-              ...options
-            })
-          } catch (error) {
-            console.error('🔴 Error removing cookie:', error)
-          }
-        },
-      },
-    }
-  )
-
   try {
+    const cookieStore = cookies();
+    const supabase = createServerSupabaseClient();
+
     // Exchange the code for a session
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    
     if (error) {
-      console.error('🔴 Error exchanging code for session:', error)
-      return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent(error.message)}`)
+      console.error('Error exchanging code for session:', error);
+      throw error;
     }
 
-    console.log('✅ Successfully exchanged code for session')
-    // Redirect to final destination (usually /dashboard)
-    return NextResponse.redirect(`${appUrl}${next}`)
-  } catch (error: any) {
-    console.error('🔴 Unexpected error in callback:', error)
-    return NextResponse.redirect(`${appUrl}/auth/error?error=${encodeURIComponent(error.message || 'An unexpected error occurred')}`)
+    // Get the app URL, ensuring HTTPS in production
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      throw new Error('NEXT_PUBLIC_APP_URL not set');
+    }
+
+    const baseUrl = new URL(appUrl);
+    baseUrl.protocol = process.env.NODE_ENV === 'production' ? 'https:' : baseUrl.protocol;
+
+    // Construct the redirect URL
+    const redirectUrl = new URL(next, baseUrl.toString());
+    
+    console.log('🔄 Redirecting to:', redirectUrl.toString());
+    
+    const response = NextResponse.redirect(redirectUrl);
+
+    // Ensure all cookies have the correct domain and security settings
+    const authCookies = cookieStore.getAll();
+    for (const cookie of authCookies) {
+      if (cookie.name.startsWith('sb-')) {
+        response.cookies.set({
+          name: cookie.name,
+          value: cookie.value,
+          domain: '.veylaai.com',
+          path: '/',
+          secure: true,
+          sameSite: 'lax',
+        });
+      }
+    }
+
+    return response;
+  } catch (error) {
+    console.error('Error in callback route:', error);
+    // Redirect to sign-in on error
+    return NextResponse.redirect(new URL('/auth/signin', requestUrl.origin));
   }
 }

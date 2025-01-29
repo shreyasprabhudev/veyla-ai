@@ -39,11 +39,13 @@ export async function middleware(req: NextRequest) {
     const appUrlObj = new URL(appUrl);
     const requestUrl = req.nextUrl.clone();
 
-    // Allow OAuth callbacks from Google to proceed
-    const isGoogleCallback = origin === 'https://accounts.google.com' && 
-                           req.nextUrl.pathname === '/auth/callback';
-    if (isGoogleCallback) {
-      console.log('✅ Allowing Google OAuth callback');
+    // Allow Supabase and Google OAuth callbacks to proceed
+    const isOAuthCallback = (
+      (origin === 'https://accounts.google.com' || origin.includes('supabase')) && 
+      req.nextUrl.pathname === '/auth/callback'
+    );
+    if (isOAuthCallback) {
+      console.log('✅ Allowing OAuth callback from:', origin);
       return NextResponse.next();
     }
 
@@ -69,8 +71,9 @@ export async function middleware(req: NextRequest) {
     const isCorrectHost = currentHost === appUrlObj.host;
     const isInternalIP = currentHost?.includes('0.0.0.0') || 
                         currentHost?.match(/^(\d{1,3}\.){3}\d{1,3}/);
+    const isSupabaseHost = currentHost?.includes('supabase');
     
-    if (!isCorrectHost && !isLocalhost && !isInternalIP) {
+    if (!isCorrectHost && !isLocalhost && !isInternalIP && !isSupabaseHost) {
       console.log('🔄 Redirecting to correct host:', {
         from: currentHost,
         to: appUrlObj.host,
@@ -107,6 +110,7 @@ export async function middleware(req: NextRequest) {
               name,
               value,
               ...options,
+              // Allow cookies to work across subdomains
               domain: '.veylaai.com',
               secure: true,
               sameSite: 'lax',
@@ -129,13 +133,18 @@ export async function middleware(req: NextRequest) {
       }
     );
 
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session without throwing errors
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.error('❌ Session error:', sessionError);
+    }
 
     // Handle authentication redirects
     const isAuthPath = req.nextUrl.pathname.startsWith('/auth');
     
     // Don't redirect during OAuth callback
     if (isAuthPath && req.nextUrl.pathname === '/auth/callback') {
+      console.log('✅ Processing OAuth callback');
       return res;
     }
     
