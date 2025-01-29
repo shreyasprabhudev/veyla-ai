@@ -8,7 +8,18 @@ const getAppUrl = () => {
     console.error('NEXT_PUBLIC_APP_URL is not set');
     throw new Error('NEXT_PUBLIC_APP_URL is required');
   }
-  return appUrl;
+  // Ensure URL is properly formatted
+  try {
+    const url = new URL(appUrl);
+    // Force HTTPS in production
+    if (process.env.NODE_ENV === 'production') {
+      url.protocol = 'https:';
+    }
+    return url.toString().replace(/\/$/, ''); // Remove trailing slash if present
+  } catch (error) {
+    console.error('Invalid NEXT_PUBLIC_APP_URL:', appUrl);
+    throw new Error('Invalid NEXT_PUBLIC_APP_URL');
+  }
 };
 
 export function GoogleSignInButton() {
@@ -26,8 +37,10 @@ export function GoogleSignInButton() {
           redirectTo,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent'
+            prompt: 'consent',
+            hd: 'veylaai.com', // Optional: restrict to your domain
           },
+          scopes: 'email profile',
         },
       });
 
