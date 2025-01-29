@@ -2,8 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  // Ensure we only bind to localhost in development
-  hostname: process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost',
   images: {
     domains: ['avatars.githubusercontent.com', 'lh3.googleusercontent.com'],
   },
