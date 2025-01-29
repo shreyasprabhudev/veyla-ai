@@ -1,69 +1,37 @@
-'use client';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
-import { createClient } from '@/lib/supabase/client';
+export default function GoogleSignInButton() {
+  const router = useRouter();
 
-const getAppUrl = () => {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    console.error('NEXT_PUBLIC_APP_URL is not set');
-    throw new Error('NEXT_PUBLIC_APP_URL is required');
-  }
-  // Ensure URL is properly formatted
-  try {
-    const url = new URL(appUrl);
-    // Force HTTPS in production
-    if (process.env.NODE_ENV === 'production') {
-      url.protocol = 'https:';
-    }
-    return url.toString().replace(/\/$/, ''); // Remove trailing slash if present
-  } catch (error) {
-    console.error('Invalid NEXT_PUBLIC_APP_URL:', appUrl);
-    throw new Error('Invalid NEXT_PUBLIC_APP_URL');
-  }
-};
-
-export function GoogleSignInButton() {
-  const supabase = createClient();
-
-  const handleGoogleSignIn = async () => {
-    try {
-      const appUrl = getAppUrl();
-      // Let Supabase handle the initial callback
-      console.log('🔵 Starting OAuth flow');
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          // Don't set redirectTo here - let Supabase handle the initial callback
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          redirectTo: `${appUrl}/auth/callback`, // This will be used after Supabase processes the callback
-        },
-      });
-
-      if (error) {
-        console.error('🔴 OAuth error:', error);
-        throw error;
-      }
-    } catch (error) {
-      console.error('🔴 Sign in error:', error);
-    }
+  const handleSignIn = () => {
+    router.push('/dashboard');
   };
 
   return (
-    <button
-      onClick={handleGoogleSignIn}
-      className="w-full flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-900"
+    <Button
+      onClick={handleSignIn}
+      className="w-full flex items-center justify-center gap-2 bg-white text-gray-900 hover:bg-gray-100"
     >
-      <svg className="h-5 w-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335" />
-        <path d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z" fill="#4285F4" />
-        <path d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.27498 6.60986C0.464979 8.22986 0 10.0599 0 11.9999C0 13.9399 0.464979 15.7699 1.27498 17.3899L5.26498 14.2949Z" fill="#FBBC05" />
-        <path d="M12.0004 24C15.2354 24 17.9504 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.245 12.0004 19.245C8.87043 19.245 6.21543 17.135 5.27043 14.29L1.28043 17.385C3.25543 21.31 7.31043 24 12.0004 24Z" fill="#34A853" />
+      <svg viewBox="0 0 24 24" className="h-5 w-5">
+        <path
+          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+          fill="#4285F4"
+        />
+        <path
+          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+          fill="#34A853"
+        />
+        <path
+          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+          fill="#FBBC05"
+        />
+        <path
+          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+          fill="#EA4335"
+        />
       </svg>
       Continue with Google
-    </button>
+    </Button>
   );
 }
