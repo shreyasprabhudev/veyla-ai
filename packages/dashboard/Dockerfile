@@ -1,5 +1,5 @@
 # Build stage
-FROM --platform=linux/amd64 node:18.19.0-alpine AS builder
+FROM --platform=linux/amd64 node:20.11.0-alpine AS builder
 
 # Add build dependencies and security updates
 RUN apk update && \
@@ -14,24 +14,28 @@ WORKDIR /app
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_APP_URL
+ARG PORT=3000
 
 # Set environment variables for build time
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    PORT=$PORT \
+    NODE_ENV=production \
+    HOSTNAME=0.0.0.0
 
-# Copy package files for better layer caching
+# Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
 COPY next.config.js ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Build application
 RUN npm run build && \
     ls -la .next/ && \
     echo "Checking standalone directory:" && \
@@ -40,18 +44,7 @@ RUN npm run build && \
     npm prune --production
 
 # Production stage
-FROM --platform=linux/amd64 node:18.19.0-alpine AS runner
-
-# Define build args again for runtime stage
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ARG NEXT_PUBLIC_APP_URL
-
-# Add production dependencies and security updates
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache curl && \
-    rm -rf /var/cache/apk/*
+FROM --platform=linux/amd64 node:20.11.0-alpine AS runner
 
 WORKDIR /app
 
@@ -59,20 +52,20 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Set runtime environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-# Only use HOSTNAME for internal binding, not for external URLs
-ENV HOSTNAME=0.0.0.0
-# Set the public URL that will be used for redirects and callbacks
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-
 # Copy necessary files from builder
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./
+COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone/. ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Set runtime environment variables
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0 \
+    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 # Switch to non-root user
 USER nextjs
@@ -85,4 +78,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
 # Start the application
-CMD ["npm", "run", "start"]
+CMD ["node", "server.js"]
