@@ -1,25 +1,26 @@
-import './globals.css'
-import { Inter } from 'next/font/google'
-import { Metadata } from 'next'
+import './globals.css';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Veyla Dashboard',
-  description: 'Manage your AI privacy settings',
-  icons: {
-    icon: '/favicon.ico',
-  },
-}
+  title: 'Veyla AI Dashboard',
+  description: 'Manage your Veyla AI account and settings',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+          {children}
+        </div>
+      </body>
     </html>
-  )
+  );
 }
