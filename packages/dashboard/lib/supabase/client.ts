@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
+import type { CookieOptions } from '@supabase/ssr'
 
 const enforceHttps = (url: string) => {
   if (!url) return url;
@@ -14,6 +15,27 @@ export const createClient = () => {
   }
 
   return createBrowserClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      get(name: string) {
+        const cookie = document.cookie
+          .split('; ')
+          .find((row) => row.startsWith(`${name}=`))
+        return cookie ? cookie.split('=')[1] : undefined
+      },
+      set(name: string, value: string, options: CookieOptions) {
+        let cookie = `${name}=${value}`
+        if (options.domain) cookie += `; domain=${options.domain}`
+        if (options.path) cookie += `; path=${options.path}`
+        if (options.maxAge) cookie += `; max-age=${options.maxAge}`
+        if (options.sameSite) cookie += `; samesite=${options.sameSite}`
+        if (options.secure) cookie += '; secure'
+        document.cookie = cookie
+      },
+      remove(name: string, options: CookieOptions) {
+        const cookie = `${name}=; max-age=0`
+        document.cookie = cookie
+      },
+    },
     auth: {
       flowType: 'pkce',
       autoRefreshToken: true,

@@ -7,6 +7,14 @@ const enforceHttps = (url: string) => {
   return url.replace(/^http:/, 'https:');
 };
 
+const getCookieOptions = (): Partial<CookieOptions> => ({
+  domain: '.veylaai.com',
+  path: '/',
+  secure: true,
+  sameSite: 'lax',
+  httpOnly: true // Server-side cookies should be httpOnly
+});
+
 export const createServerSupabaseClient = () => {
   const cookieStore = cookies();
   const supabaseUrl = enforceHttps(process.env.NEXT_PUBLIC_SUPABASE_URL!);
@@ -26,14 +34,11 @@ export const createServerSupabaseClient = () => {
         },
         set(name: string, value: string, options: CookieOptions) {
           try {
-            cookieStore.set({ 
-              name, 
-              value, 
-              ...options,
-              domain: '.veylaai.com',
-              path: '/',
-              secure: true,
-              sameSite: 'lax'
+            cookieStore.set({
+              name,
+              value,
+              ...getCookieOptions(),
+              ...options
             });
           } catch (error) {
             console.error('Failed to set cookie:', error);
@@ -41,21 +46,24 @@ export const createServerSupabaseClient = () => {
         },
         remove(name: string, options: CookieOptions) {
           try {
-            cookieStore.set({ 
-              name, 
-              value: '', 
+            cookieStore.set({
+              name,
+              value: '',
+              ...getCookieOptions(),
               ...options,
-              domain: '.veylaai.com',
-              path: '/',
-              secure: true,
-              sameSite: 'lax',
-              maxAge: 0 
+              maxAge: 0
             });
           } catch (error) {
             console.error('Failed to remove cookie:', error);
           }
         },
       },
+      auth: {
+        flowType: 'pkce',
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        persistSession: true
+      }
     }
   );
 };
