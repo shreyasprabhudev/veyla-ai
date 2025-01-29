@@ -1,11 +1,10 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import Image from 'next/image';
 
 // Get the app URL from environment, fallback to window.location.origin for development
 const getAppUrl = () => {
-  return process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+  return process.env.NEXT_PUBLIC_APP_URL;
 };
 
 export function GoogleSignInButton() {

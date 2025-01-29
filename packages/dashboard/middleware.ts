@@ -29,7 +29,8 @@ export async function middleware(req: NextRequest) {
 
     const appUrlObj = new URL(appUrl);
     const requestUrl = req.nextUrl.clone();
-    const currentHost = req.headers.get('host');
+    const forwardedHost = req.headers.get("x-forwarded-host");
+    const currentHost = forwardedHost ?? req.headers.get("host");
     const userAgent = req.headers.get('user-agent') || '';
 
     // Allow ELB health checks to bypass host checks
