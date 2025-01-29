@@ -4,16 +4,9 @@ const nextConfig = {
   images: {
     domains: ['avatars.githubusercontent.com', 'lh3.googleusercontent.com'],
   },
-  experimental: {
-    // Server Actions are now stable in Next.js 14
-    // serverActions: true,
-  },
-  // Ensure proper hostname handling
-  hostname: '0.0.0.0',
-  port: process.env.PORT || 3000,
   // Configure base path and asset prefix based on environment
-  basePath: '',
-  assetPrefix: process.env.NEXT_PUBLIC_APP_URL,
+  basePath: process.env.NODE_ENV === 'production' ? '' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_APP_URL : '',
   // Handle domain-specific configuration
   async headers() {
     return [
@@ -41,13 +34,14 @@ const nextConfig = {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) return [];
 
+    const appUrlObj = new URL(appUrl);
     return [
       {
         source: '/:path*',
         has: [
           {
             type: 'host',
-            value: '(?!app\\.veylaai\\.com).*',
+            value: `(?!${appUrlObj.host.replace('.', '\\.')}).*`,
           },
         ],
         destination: `${appUrl}/:path*`,
@@ -55,6 +49,6 @@ const nextConfig = {
       },
     ];
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
