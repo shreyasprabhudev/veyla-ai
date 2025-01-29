@@ -4,20 +4,7 @@ import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
   try {
-    // Debug logging with request details
-    console.log('🔍 Request Details:', {
-      url: req.url,
-      method: req.method,
-      pathname: req.nextUrl.pathname,
-      host: req.headers.get('host'),
-      userAgent: req.headers.get('user-agent'),
-      env: {
-        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-        NODE_ENV: process.env.NODE_ENV,
-      }
-    });
-
-    // Get the app URL from environment variable
+    // Get app URL from environment
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
       console.error('❌ NEXT_PUBLIC_APP_URL is not set');
@@ -27,11 +14,28 @@ export async function middleware(req: NextRequest) {
       );
     }
 
+    // Debug logging with request details
+    const forwardedHost = req.headers.get('x-forwarded-host');
+    const currentHost = forwardedHost ?? req.headers.get('host') ?? '';
+    const userAgent = req.headers.get('user-agent') ?? '';
+    const forwardedProto = req.headers.get('x-forwarded-proto') ?? req.nextUrl.protocol;
+
+    console.log('🔍 Request Details:', {
+      url: req.url,
+      method: req.method,
+      pathname: req.nextUrl.pathname,
+      host: currentHost,
+      forwardedHost,
+      forwardedProto,
+      userAgent,
+      env: {
+        NEXT_PUBLIC_APP_URL: appUrl,
+        NODE_ENV: process.env.NODE_ENV,
+      }
+    });
+
     const appUrlObj = new URL(appUrl);
     const requestUrl = req.nextUrl.clone();
-    const forwardedHost = req.headers.get("x-forwarded-host");
-    const currentHost = forwardedHost ?? req.headers.get("host");
-    const userAgent = req.headers.get('user-agent') || '';
 
     // Allow ELB health checks to bypass host checks
     const isHealthCheck = userAgent.includes('ELB-HealthChecker') && 
@@ -60,13 +64,24 @@ export async function middleware(req: NextRequest) {
         to: appUrlObj.host,
         path: requestUrl.pathname
       });
+
+      // Ensure we're using the correct protocol and host
       requestUrl.protocol = appUrlObj.protocol;
       requestUrl.host = appUrlObj.host;
-      return NextResponse.redirect(requestUrl);
+      requestUrl.port = '';  // Clear any port number
+      
+      const response = NextResponse.redirect(requestUrl);
+      
+      // Set secure headers
+      response.headers.set('X-Forwarded-Host', appUrlObj.host);
+      response.headers.set('X-Forwarded-Proto', appUrlObj.protocol.replace(':', ''));
+      
+      return response;
     }
 
     const res = NextResponse.next();
 
+    // Configure Supabase client with secure cookie settings
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -83,6 +98,7 @@ export async function middleware(req: NextRequest) {
               domain: '.veylaai.com',
               secure: true,
               sameSite: 'lax',
+              path: '/',
             });
           },
           remove(name: string, options: any) {
@@ -93,6 +109,8 @@ export async function middleware(req: NextRequest) {
               domain: '.veylaai.com',
               secure: true,
               sameSite: 'lax',
+              path: '/',
+              maxAge: 0,
             });
           },
         },
@@ -113,6 +131,11 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', appUrl));
     }
 
+    // Set secure headers
+    res.headers.set('X-Frame-Options', 'DENY');
+    res.headers.set('X-Content-Type-Options', 'nosniff');
+    res.headers.set('Referrer-Policy', 'origin-when-cross-origin');
+    
     return res;
   } catch (error) {
     console.error('❌ Middleware error:', error);
@@ -125,6 +148,13 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
   ],
 };
