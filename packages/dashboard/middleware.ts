@@ -18,14 +18,22 @@ export async function middleware(req: NextRequest) {
     throw new Error('NEXT_PUBLIC_APP_URL is required');
   }
 
+  // Parse the app URL to get the host
+  const appUrlObj = new URL(appUrl);
+
   // Bypass /api or /_next
   if (req.nextUrl.pathname.startsWith('/api') || 
       req.nextUrl.pathname.startsWith('/_next') ||
       req.nextUrl.pathname.startsWith('/favicon.ico')) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    // Even for API routes, ensure correct host header
+    response.headers.set('host', appUrlObj.host);
+    return response;
   }
 
   const res = NextResponse.next();
+  // Set the correct host header
+  res.headers.set('host', appUrlObj.host);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -64,6 +72,11 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  // Rewrite the URL to use the correct host
+  const url = req.nextUrl.clone();
+  url.protocol = appUrlObj.protocol;
+  url.host = appUrlObj.host;
+
   // If user is not logged in and tries to access a protected route,
   // redirect to /auth/signin
   if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
@@ -75,6 +88,12 @@ export async function middleware(req: NextRequest) {
   if (session && req.nextUrl.pathname.startsWith('/auth')) {
     console.log('✅ Session exists, redirecting to dashboard');
     return NextResponse.redirect(new URL('/dashboard', appUrl));
+  }
+
+  // For all other routes, ensure they use the correct host
+  if (req.headers.get('host') !== appUrlObj.host) {
+    console.log('🔄 Rewriting URL to use correct host');
+    return NextResponse.rewrite(url);
   }
 
   return res;
