@@ -1,30 +1,20 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '../lib/auth';
-
 export default function DashboardPage() {
-  const router = useRouter();
-  const supabase = createClient();
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('No session found:', error);
-        router.replace('/auth/signin');
-        return;
-      }
-    };
-
-    checkSession();
-  }, [router]);
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Welcome to Your Dashboard</h1>
-      <p>You are successfully logged in!</p>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <main className="py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Dashboard
+          </h1>
+          <div className="mt-4">
+            <p className="text-gray-600 dark:text-gray-400">
+              Welcome to your dashboard!
+            </p>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
