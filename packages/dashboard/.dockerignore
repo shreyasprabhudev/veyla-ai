@@ -1,8 +1,36 @@
-.git
-.next
+# Dependencies
 node_modules
 npm-debug.log
+
+# Git
+.git
+.gitignore
+
+# Build outputs
+.next
+out
+build
+dist
+
+# Environment
+.env*
+!.env.example
+!.env.template
+
+# IDE
+.vscode
+.idea
+
+# Misc
 README.md
-.env
-.env.local
-.env.*
+*.md
+.DS_Store
+*.pem
+
+# Testing
+coverage
+.nyc_output
+
+# Debug logs
+logs
+*.log
