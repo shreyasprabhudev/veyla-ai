@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   basePath: process.env.NODE_ENV === 'production' ? '/dashboard' : '',
+  experimental: {
+    esmExternals: 'loose',
+    serverComponentsExternalPackages: ['@mlc-ai/web-llm'],
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -18,6 +22,8 @@ const nextConfig = {
         zlib: require.resolve('browserify-zlib'),
       };
     }
+    // Ensure proper module resolution
+    config.resolve.modules = ['node_modules', '.'];
     return config;
   },
   // Add rewrites for development environment

@@ -33,14 +33,14 @@ COPY next.config.js ./
 COPY postcss.config.js ./
 COPY tailwind.config.js ./
 
-# Install dependencies with legacy-peer-deps flag and including dev dependencies
+# Install dependencies with legacy-peer-deps flag and including dev dependencies for build
 RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
 
-# Build application
-RUN npm run build
+# Build application with explicit NODE_ENV
+RUN NODE_ENV=production npm run build
 
 # Production stage
 FROM --platform=linux/amd64 node:20.11.0-alpine AS runner
