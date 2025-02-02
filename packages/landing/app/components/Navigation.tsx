@@ -6,12 +6,22 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '../lib/utils'
 import { createBrowserClient } from '@supabase/ssr'
+import { routes } from '@veyla/shared/routes';
 
 const navigation = [
   { name: 'Home', href: '/' },
-  { name: 'About', href: '/#about' },
+  {
+    name: 'Products',
+    items: [
+      { name: 'Language Models', href: '/products/language-models' },
+      { name: 'API Access', href: '/products/api' },
+      { name: 'Enterprise Solutions', href: '/products/enterprise' },
+    ],
+  },
+  { name: 'About', href: '/about' },
   { name: 'Features', href: '/#features' },
   { name: 'Pricing', href: '/#pricing' },
+  { name: 'Dashboard', href: `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/dashboard` },
 ]
 
 export function Navigation() {
@@ -25,16 +35,21 @@ export function Navigation() {
     {
       cookies: {
         get(name: string) {
+          if (typeof document === 'undefined') return ''
           return document.cookie
             .split('; ')
             .find((row) => row.startsWith(`${name}=`))
             ?.split('=')[1]
         },
         set(name: string, value: string) {
-          document.cookie = `${name}=${value}; domain=.veylaai.com; path=/; secure; samesite=lax`
+          if (typeof document === 'undefined') return
+          const domain = process.env.NEXT_PUBLIC_ENV === 'development' ? 'localhost' : '.veylaai.com'
+          document.cookie = `${name}=${value}; domain=${domain}; path=/; secure; samesite=lax`
         },
         remove(name: string) {
-          document.cookie = `${name}=; domain=.veylaai.com; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+          if (typeof document === 'undefined') return
+          const domain = process.env.NEXT_PUBLIC_ENV === 'development' ? 'localhost' : '.veylaai.com'
+          document.cookie = `${name}=; domain=${domain}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
         },
       },
     }
@@ -79,85 +94,81 @@ export function Navigation() {
             <div className="flex h-16 justify-between">
               <div className="flex">
                 <div className="flex flex-shrink-0 items-center">
-                  <Link href="/" className="text-xl font-bold text-white">
+                  <Link href="/" className="text-2xl font-bold text-white hover:text-gray-200 transition">
                     Veyla AI
                   </Link>
                 </div>
                 <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={(e) => handleNavClick(e, item.href)}
-                      className={cn(
-                        pathname === item.href
-                          ? 'bg-gray-900 text-white'
-                          : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                        'rounded-md px-3 py-2 text-sm font-medium'
-                      )}
-                      aria-current={pathname === item.href ? 'page' : undefined}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
+                  {navigation.map((item) => 
+                    'items' in item ? (
+                      <Menu as="div" className="relative" key={item.name}>
+                        <Menu.Button className="flex items-center px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+                          {item.name}
+                          <svg className="ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </Menu.Button>
+                        <Menu.Items className="absolute left-0 mt-2 w-48 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          {item.items.map((subItem) => (
+                            <Menu.Item key={subItem.name}>
+                              {({ active }) => (
+                                <Link
+                                  href={subItem.href}
+                                  className={cn(
+                                    active ? 'bg-gray-100' : '',
+                                    'block px-4 py-2 text-sm text-gray-700'
+                                  )}
+                                >
+                                  {subItem.name}
+                                </Link>
+                              )}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Items>
+                      </Menu>
+                    ) : (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={(e) => handleNavClick(e, item.href)}
+                        className={cn(
+                          'px-3 py-2 text-sm font-medium rounded-md',
+                          pathname === item.href
+                            ? 'bg-gray-900 text-white'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    )
+                  )}
                 </div>
               </div>
-              <div className="flex items-center">
-                {loading ? (
-                  <div className="h-8 w-8 animate-pulse rounded-full bg-gray-700" />
-                ) : session ? (
-                  <Menu as="div" className="relative ml-3">
-                    <Menu.Button className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                      <span className="absolute -inset-1.5" />
-                      <span className="sr-only">Open user menu</span>
-                      <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
-                        {session.user.email?.[0].toUpperCase()}
-                      </div>
-                    </Menu.Button>
-                    <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <a
-                            href={process.env.NEXT_PUBLIC_APP_URL || 'https://app.veylaai.com'}
-                            className={cn(
-                              active ? 'bg-gray-100' : '',
-                              'block px-4 py-2 text-sm text-gray-700'
-                            )}
-                          >
-                            Dashboard
-                          </a>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={handleSignOut}
-                            className={cn(
-                              active ? 'bg-gray-100' : '',
-                              'block w-full text-left px-4 py-2 text-sm text-gray-700'
-                            )}
-                          >
-                            Sign out
-                          </button>
-                        )}
-                      </Menu.Item>
-                    </Menu.Items>
-                  </Menu>
-                ) : (
-                  <div className="flex items-center space-x-4">
-                    <a
-                      href="https://app.veylaai.com/auth/signin"
-                      className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+              
+              <div className="flex items-center space-x-4">
+                {!loading && !session && (
+                  <>
+                    <Link
+                      href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL}${routes.auth.signIn}`}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                     >
                       Sign in
-                    </a>
-                    <a
-                      href="https://app.veylaai.com/auth/signin?signup=true"
-                      className="bg-purple-600 hover:bg-purple-700 text-white rounded-md px-3 py-2 text-sm font-medium"
+                    </Link>
+                    <Link
+                      href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL}${routes.auth.signUp}`}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700"
                     >
                       Get Started
-                    </a>
-                  </div>
+                    </Link>
+                  </>
+                )}
+                {session && (
+                  <button
+                    onClick={handleSignOut}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700"
+                  >
+                    Sign out
+                  </button>
                 )}
               </div>
             </div>

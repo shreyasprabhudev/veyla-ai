@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
-  output: 'export',
+const nextConfig = {
+  transpilePackages: ['@veyla/shared'],
+  experimental: {
+    externalDir: true,
+  },
+  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
   images: {
     unoptimized: true,
   },
@@ -9,6 +13,9 @@ module.exports = {
   skipTrailingSlashRedirect: true,
   // Add cache control headers
   async headers() {
+    if (process.env.NODE_ENV === 'production') {
+      return [];
+    }
     return [
       {
         source: '/:path*',
@@ -22,3 +29,5 @@ module.exports = {
     ];
   },
 };
+
+module.exports = nextConfig;
