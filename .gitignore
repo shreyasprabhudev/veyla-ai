@@ -63,6 +63,7 @@ web-ext-artifacts/
 next-env.d.ts
 
 # Package managers
+package-lock.json
 yarn.lock
 .yarn/cache
 .yarn/unplugged

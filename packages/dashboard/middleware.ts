@@ -31,11 +31,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match /dashboard exactly
-    '/dashboard',
-    // Match all paths under /dashboard
-    '/dashboard/:path*',
-    // Skip static files and API routes
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    // Match all paths except static files
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

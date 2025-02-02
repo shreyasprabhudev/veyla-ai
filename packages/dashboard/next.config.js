@@ -7,15 +7,16 @@ const nextConfig = {
     esmExternals: 'loose',
     serverComponentsExternalPackages: ['@mlc-ai/web-llm'],
   },
-  async redirects() {
-    return [
-      {
-        source: '/dashboard',
-        destination: '/dashboard',
-        basePath: false,
-        permanent: true
-      }
-    ];
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/dashboard',
+          destination: '/dashboard/',
+          basePath: false
+        }
+      ]
+    };
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
