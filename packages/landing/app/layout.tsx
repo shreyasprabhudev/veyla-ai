@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { Navigation } from './components/Navigation';
+import { Footer } from './components/Footer';
 
 export const metadata: Metadata = {
   title: 'VeylaAI - Privacy-First AI Platform',
@@ -13,7 +15,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50">{children}</body>
+      <body className="bg-gray-50">
+        <Navigation />
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }

@@ -83,7 +83,7 @@ export default function Home() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <a
-                href="https://app.veylaai.com/auth/signin"
+                href={`${process.env.NEXT_PUBLIC_APP_URL}/sign-in`}
                 className="rounded-md bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 transition-all duration-200"
               >
                 Get started
