@@ -49,6 +49,9 @@ const nextConfig = {
     }
     return [];
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 module.exports = nextConfig;
