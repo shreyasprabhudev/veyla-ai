@@ -28,7 +28,8 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
 COPY package.json ./
 
 # Install all dependencies (including dev dependencies)
-RUN npm install --include=dev --legacy-peer-deps
+RUN npm install --legacy-peer-deps && \
+npm cache clean --force
 
 # Copy configuration files
 COPY tsconfig*.json ./
@@ -61,7 +62,9 @@ ENV NODE_ENV=production \
 
 # Install production dependencies only
 COPY package.json ./
-RUN npm install --omit=dev --legacy-peer-deps && npm cache clean --force
+RUN npm install --omit=dev --legacy-peer-deps && \
+    npm install lucide-react@latest --legacy-peer-deps && \
+    npm cache clean --force
 
 # Copy necessary files from builder
 COPY --from=builder /app/next.config.js ./
