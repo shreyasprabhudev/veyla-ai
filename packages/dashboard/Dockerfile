@@ -24,8 +24,11 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
-# Copy package files
-COPY package*.json ./
+# First copy only package.json to leverage Docker cache
+COPY package.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm install --include=dev --legacy-peer-deps
 
 # Copy configuration files
 COPY tsconfig*.json ./
@@ -33,14 +36,11 @@ COPY next.config.js ./
 COPY postcss.config.js ./
 COPY tailwind.config.js ./
 
-# Install dependencies and generate package-lock.json
-RUN npm install
-
 # Copy source code
 COPY . .
 
-# Build application with explicit NODE_ENV
-RUN NODE_ENV=production npm run build
+# Build application
+RUN npm run build
 
 # Production stage
 FROM --platform=linux/amd64 node:20.11.0-alpine AS runner
@@ -51,15 +51,6 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy necessary files from builder
-COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/postcss.config.js ./
-COPY --from=builder /app/tailwind.config.js ./
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
 # Set runtime environment variables
 ENV NODE_ENV=production \
     PORT=3000 \
@@ -67,6 +58,18 @@ ENV NODE_ENV=production \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Install production dependencies only
+COPY package.json ./
+RUN npm install --omit=dev --legacy-peer-deps && npm cache clean --force
+
+# Copy necessary files from builder
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/postcss.config.js ./
+COPY --from=builder /app/tailwind.config.js ./
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Switch to non-root user
 USER nextjs
