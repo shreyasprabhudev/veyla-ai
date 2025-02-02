@@ -20,6 +20,7 @@ const navItems = [
   { href: "/contact", label: "Contact" },
 ]
 
+// Dashboard navigation
 export function Navigation() {
   return (
     <motion.div 
