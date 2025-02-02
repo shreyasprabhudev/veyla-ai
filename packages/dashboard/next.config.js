@@ -12,7 +12,7 @@ const nextConfig = {
       beforeFiles: [
         {
           source: '/dashboard',
-          destination: '/dashboard/',
+          destination: '/dashboard/index',
           basePath: false
         }
       ]

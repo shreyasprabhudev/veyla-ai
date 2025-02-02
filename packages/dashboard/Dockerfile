@@ -42,8 +42,12 @@ RUN echo "Verifying paths:" && \
     ls -la app/features/chat/components && \
     ls -la app/features/chat
 
-# Build application with verbose output
-RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build && \
+# Install dependencies and build
+RUN npm ci
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
+
+# Clean install production dependencies
+RUN rm -rf node_modules && \
     npm ci --only=production
 
 # Production stage
