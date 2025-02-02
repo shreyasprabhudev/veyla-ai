@@ -12,11 +12,19 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
+    // Handle /dashboard without trailing slash
+    if (req.nextUrl.pathname === '/dashboard') {
+      const url = req.nextUrl.clone();
+      url.pathname = '/dashboard/';
+      return NextResponse.redirect(url);
+    }
+
     // Set secure headers
     const res = NextResponse.next();
     res.headers.set('X-Frame-Options', 'DENY');
     res.headers.set('X-Content-Type-Options', 'nosniff');
     res.headers.set('Referrer-Policy', 'origin-when-cross-origin');
+    res.headers.set('Cache-Control', 'no-store, must-revalidate');
     
     return res;
   } catch (error) {
@@ -30,13 +38,11 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
+    // Need to match /dashboard exactly for the redirect
+    '/dashboard',
+    // Match all paths under /dashboard
+    '/dashboard/:path*',
+    // Skip static files and API routes
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   basePath: '/dashboard',
+  trailingSlash: true,
   experimental: {
     appDir: true,
     esmExternals: 'loose',
