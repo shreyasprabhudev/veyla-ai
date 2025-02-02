@@ -24,7 +24,7 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
-# Copy package.json first
+# Copy package files
 COPY package*.json ./
 
 # Copy configuration files
@@ -33,8 +33,8 @@ COPY next.config.js ./
 COPY postcss.config.js ./
 COPY tailwind.config.js ./
 
-# Install dependencies with legacy-peer-deps flag and including dev dependencies for build
-RUN npm install --legacy-peer-deps
+# Clean install dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -51,28 +51,23 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
+# Set production environment
+ENV NODE_ENV=production
+
 # Copy necessary files from builder
-COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/postcss.config.js ./
+COPY --from=builder /app/tailwind.config.js ./
+COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Set runtime environment variables
-ENV NODE_ENV=production \
-    PORT=3000 \
-    HOSTNAME=0.0.0.0 \
-    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
-    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-# Switch to non-root user
+# Set user
 USER nextjs
 
-EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+# Expose port
+EXPOSE 3001
 
 # Start the application
 CMD ["node", "server.js"]

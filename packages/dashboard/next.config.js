@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   basePath: process.env.NODE_ENV === 'production' ? '/dashboard' : '',
+  output: 'standalone',
   experimental: {
     esmExternals: 'loose',
     serverComponentsExternalPackages: ['@mlc-ai/web-llm'],
