@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  basePath: process.env.NODE_ENV === 'production' ? '/dashboard' : '',
+  basePath: '/dashboard',
   output: 'standalone',
   experimental: {
     esmExternals: 'loose',
