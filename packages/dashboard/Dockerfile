@@ -21,12 +21,11 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     PORT=$PORT \
-    NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
 # First copy package files and install dependencies
 COPY package*.json ./
-RUN npm install --legacy-peer-deps && \
+RUN npm install --production=false && \
     npm cache clean --force
 
 # Copy source code and config files
@@ -44,7 +43,8 @@ RUN echo "Verifying paths:" && \
     ls -la app/features/chat
 
 # Build application with verbose output
-RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build && \
+    npm ci --only=production
 
 # Production stage
 FROM --platform=linux/amd64 node:20.11.0-alpine AS runner
