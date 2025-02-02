@@ -33,8 +33,8 @@ COPY next.config.js ./
 COPY postcss.config.js ./
 COPY tailwind.config.js ./
 
-# Clean install dependencies
-RUN npm ci
+# Install dependencies and generate package-lock.json
+RUN npm install
 
 # Copy source code
 COPY . .
