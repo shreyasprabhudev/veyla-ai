@@ -29,16 +29,17 @@ COPY package.json ./
 
 # Install all dependencies (including dev dependencies)
 RUN npm install --legacy-peer-deps && \
-npm cache clean --force
+    npm cache clean --force
 
-# Copy configuration files
-COPY tsconfig*.json ./
-COPY next.config.js ./
-COPY postcss.config.js ./
-COPY tailwind.config.js ./
-
-# Copy source code
+# Copy the entire project
 COPY . .
+
+# Verify file structure
+RUN ls -la && \
+    echo "Checking app directory:" && \
+    ls -la app && \
+    echo "Checking components directory:" && \
+    ls -la components
 
 # Build application
 RUN npm run build
@@ -63,7 +64,6 @@ ENV NODE_ENV=production \
 # Install production dependencies only
 COPY package.json ./
 RUN npm install --omit=dev --legacy-peer-deps && \
-    npm install lucide-react@latest --legacy-peer-deps && \
     npm cache clean --force
 
 # Copy necessary files from builder
