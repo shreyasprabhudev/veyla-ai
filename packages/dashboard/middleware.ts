@@ -12,13 +12,6 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // Handle /dashboard without trailing slash
-    if (req.nextUrl.pathname === '/dashboard') {
-      const url = req.nextUrl.clone();
-      url.pathname = '/dashboard/';
-      return NextResponse.redirect(url);
-    }
-
     // Set secure headers
     const res = NextResponse.next();
     res.headers.set('X-Frame-Options', 'DENY');
@@ -38,7 +31,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Need to match /dashboard exactly for the redirect
+    // Match /dashboard exactly
     '/dashboard',
     // Match all paths under /dashboard
     '/dashboard/:path*',

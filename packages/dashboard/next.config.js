@@ -3,15 +3,19 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   basePath: '/dashboard',
-  trailingSlash: true,
   experimental: {
-    appDir: true,
     esmExternals: 'loose',
     serverComponentsExternalPackages: ['@mlc-ai/web-llm'],
   },
-  staticPageGenerationTimeout: 120,
-  generateStaticParams: async () => {
-    return [];
+  async redirects() {
+    return [
+      {
+        source: '/dashboard',
+        destination: '/dashboard',
+        basePath: false,
+        permanent: true
+      }
+    ];
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -42,18 +46,6 @@ const nextConfig = {
     // Ensure proper module resolution
     config.resolve.modules = ['node_modules', '.'];
     return config;
-  },
-  // Add rewrites for development environment
-  async rewrites() {
-    if (process.env.NODE_ENV === 'development') {
-      return [
-        {
-          source: '/:path*',
-          destination: '/:path*',
-        },
-      ];
-    }
-    return [];
   },
   typescript: {
     ignoreBuildErrors: true,
