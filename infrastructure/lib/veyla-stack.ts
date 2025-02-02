@@ -2,9 +2,6 @@ import * as cdk from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as ecs from 'aws-cdk-lib/aws-ecs'
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2'
-import * as acm from 'aws-cdk-lib/aws-certificatemanager'
-import * as route53 from 'aws-cdk-lib/aws-route53'
-import * as targets from 'aws-cdk-lib/aws-route53-targets'
 import * as logs from 'aws-cdk-lib/aws-logs'
 import * as ssm from 'aws-cdk-lib/aws-ssm'
 import * as iam from 'aws-cdk-lib/aws-iam'
@@ -31,17 +28,7 @@ export class VeylaStack extends cdk.Stack {
       containerInsights: true,
     })
 
-    // AC
-    if (!process.env.ACM_CERTIFICATE_ARN) {
-      throw new Error('ACM_CERTIFICATE_ARN env var required')
-    }
-    const certificate = acm.Certificate.fromCertificateArn(
-      this,
-      'DashboardCertificate',
-      process.env.ACM_CERTIFICATE_ARN!
-    )
-
-    // ALB
+    // ALB Security Group
     const albSg = new ec2.SecurityGroup(this, 'AlbSecurityGroup', {
       vpc,
       description: 'ALB Security Group'
@@ -49,13 +36,14 @@ export class VeylaStack extends cdk.Stack {
     albSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'HTTP inbound')
     albSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'HTTPS inbound')
 
+    // Application Load Balancer
     const alb = new elbv2.ApplicationLoadBalancer(this, 'VeylaALB', {
       vpc,
       internetFacing: true,
       securityGroup: albSg,
     })
 
-    // HTTP → HTTPS
+    // HTTP Listener (redirect to HTTPS)
     alb.addListener('HttpListener', {
       port: 80,
       protocol: elbv2.ApplicationProtocol.HTTP,
@@ -70,7 +58,14 @@ export class VeylaStack extends cdk.Stack {
     const httpsListener = alb.addListener('HttpsListener', {
       port: 443,
       protocol: elbv2.ApplicationProtocol.HTTPS,
-      certificates: [certificate],
+      certificates: [
+        // Use the default ACM certificate that's already validated in Cloudflare
+        elbv2.ListenerCertificate.fromArn(process.env.ACM_CERTIFICATE_ARN!)
+      ],
+      defaultAction: elbv2.ListenerAction.fixedResponse(404, {
+        contentType: 'text/plain',
+        messageBody: 'Not Found'
+      })
     })
 
     // Target Group
@@ -85,41 +80,16 @@ export class VeylaStack extends cdk.Stack {
         healthyThresholdCount: 2,
         unhealthyThresholdCount: 3,
       },
+      targetType: ecs.TargetType.IP,
     })
 
+    // Forward all traffic to the target group since Cloudflare handles routing
     httpsListener.addAction('DashboardAction', {
       priority: 1,
       conditions: [
-        elbv2.ListenerCondition.pathPatterns(['/dashboard', '/dashboard/*']),
+        elbv2.ListenerCondition.pathPatterns(['/*']),
       ],
       action: elbv2.ListenerAction.forward([targetGroup])
-    });
-
-    httpsListener.addAction('DefaultAction', {
-      priority: 100,
-      conditions: [],
-      action: elbv2.ListenerAction.fixedResponse(404, {
-        contentType: 'text/plain',
-        messageBody: 'Not Found'
-      })
-    });
-
-    // DNS
-    const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-      domainName: props?.domainName ?? 'veylaai.com',
-    })
-
-    new route53.ARecord(this, 'DashboardARecord', {
-      zone: hostedZone,
-      recordName: 'app.veylaai.com',
-      target: route53.RecordTarget.fromAlias(new targets.LoadBalancerTarget(alb)),
-      ttl: cdk.Duration.minutes(5),
-    })
-
-    // ECS Task Definition
-    const taskDefinition = new ecs.FargateTaskDefinition(this, 'DashboardTaskDef', {
-      cpu: 1024, // 1 vCPU
-      memoryLimitMiB: 2048, // 2GB
     })
 
     // Log group
@@ -129,7 +99,13 @@ export class VeylaStack extends cdk.Stack {
       retention: logs.RetentionDays.ONE_WEEK,
     })
 
-    // (Optional) Store env in SSM or just pass them below
+    // Task Definition
+    const taskDefinition = new ecs.FargateTaskDefinition(this, 'DashboardTaskDef', {
+      cpu: 1024,
+      memoryLimitMiB: 2048,
+    })
+
+    // Get environment variables
     const supabaseUrlParam = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKeyParam = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -202,6 +178,7 @@ export class VeylaStack extends cdk.Stack {
       })
     )
 
+    // Output the ALB DNS name
     new cdk.CfnOutput(this, 'LoadBalancerDNS', {
       value: alb.loadBalancerDnsName,
       description: 'Public DNS of the ALB',
