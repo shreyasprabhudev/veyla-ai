@@ -76,10 +76,10 @@ export class VeylaStack extends cdk.Stack {
     // Target Group
     const targetGroup = new elbv2.ApplicationTargetGroup(this, 'DashboardTargetGroup', {
       vpc,
-      port: 3000,
+      port: 3001,
       protocol: elbv2.ApplicationProtocol.HTTP,
       healthCheck: {
-        path: '/api/health',
+        path: '/dashboard/api/health',
         interval: cdk.Duration.seconds(30),
         timeout: cdk.Duration.seconds(5),
         healthyThresholdCount: 2,
@@ -87,9 +87,22 @@ export class VeylaStack extends cdk.Stack {
       },
     })
 
-    httpsListener.addTargetGroups('TargetDashboard', {
-      targetGroups: [targetGroup],
-    })
+    httpsListener.addAction('DashboardAction', {
+      priority: 1,
+      conditions: [
+        elbv2.ListenerCondition.pathPatterns(['/dashboard', '/dashboard/*']),
+      ],
+      action: elbv2.ListenerAction.forward([targetGroup])
+    });
+
+    httpsListener.addAction('DefaultAction', {
+      priority: 100,
+      conditions: [],
+      action: elbv2.ListenerAction.fixedResponse(404, {
+        contentType: 'text/plain',
+        messageBody: 'Not Found'
+      })
+    });
 
     // DNS
     const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
@@ -131,7 +144,7 @@ export class VeylaStack extends cdk.Stack {
       }),
       environment: {
         NODE_ENV: 'production',
-        PORT: '3000',
+        PORT: '3001',
         NEXT_PUBLIC_APP_URL: 'https://app.veylaai.com',
         NEXT_PUBLIC_SUPABASE_URL: supabaseUrlParam ?? '',
         NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKeyParam ?? '',
@@ -141,7 +154,7 @@ export class VeylaStack extends cdk.Stack {
         streamPrefix: 'dashboard',
       }),
       healthCheck: {
-        command: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health || exit 1'],
+        command: ['CMD-SHELL', 'curl -f http://localhost:3001/dashboard/api/health || exit 1'],
         interval: cdk.Duration.seconds(30),
         timeout: cdk.Duration.seconds(5),
         retries: 3,
@@ -149,7 +162,7 @@ export class VeylaStack extends cdk.Stack {
     })
 
     container.addPortMappings({
-      containerPort: 3000,
+      containerPort: 3001,
       protocol: ecs.Protocol.TCP,
     })
 
@@ -158,7 +171,7 @@ export class VeylaStack extends cdk.Stack {
       vpc,
       description: 'Security group for ECS service',
     })
-    serviceSg.connections.allowFrom(albSg, ec2.Port.tcp(3000), 'Allow ALB to access app')
+    serviceSg.connections.allowFrom(albSg, ec2.Port.tcp(3001), 'Allow ALB to access app')
 
     // ECS Service with FARGATE_SPOT
     const service = new ecs.FargateService(this, 'DashboardService', {
