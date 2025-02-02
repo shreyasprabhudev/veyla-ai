@@ -19,10 +19,20 @@ const nextConfig = {
         http: require.resolve('stream-http'),
         https: require.resolve('https-browserify'),
         assert: require.resolve('assert'),
-        os: require.resolve('os-browserify'),
         zlib: require.resolve('browserify-zlib'),
+        os: require.resolve('os-browserify'),
       };
     }
+
+    // Add aliases
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': '.',
+      '@/components': './components',
+      '@/app': './app',
+      '@/lib': './lib'
+    };
+
     // Ensure proper module resolution
     config.resolve.modules = ['node_modules', '.'];
     return config;

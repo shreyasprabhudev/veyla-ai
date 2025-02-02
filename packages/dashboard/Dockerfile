@@ -24,38 +24,27 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
-# First copy only package files
+# First copy package files and install dependencies
 COPY package*.json ./
-
-# Install all dependencies (including dev dependencies)
 RUN npm install --legacy-peer-deps && \
     npm cache clean --force
 
-# Copy source files
-COPY app ./app
-COPY components ./components
-COPY lib ./lib
-COPY public ./public
+# Copy source code and config files
+COPY . .
 
-# Copy config files
-COPY next.config.js .
-COPY postcss.config.js .
-COPY tailwind.config.js .
-COPY tsconfig.json .
-COPY middleware.ts .
+# Verify Next.js config
+RUN cat next.config.js && \
+    echo "\nChecking tsconfig.json:" && \
+    cat tsconfig.json
 
-# Verify file structure
-RUN echo "Verifying file structure:" && \
-    ls -la && \
-    echo "\nChecking app directory:" && \
-    ls -la app && \
-    echo "\nChecking components/ui directory:" && \
+# Verify critical paths exist
+RUN echo "Verifying paths:" && \
     ls -la components/ui && \
-    echo "\nChecking app/features/chat/components directory:" && \
-    ls -la app/features/chat/components
+    ls -la app/features/chat/components && \
+    ls -la app/features/chat
 
-# Build application
-RUN npm run build
+# Build application with verbose output
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Production stage
 FROM --platform=linux/amd64 node:20.11.0-alpine AS runner
@@ -75,17 +64,14 @@ ENV NODE_ENV=production \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 # Install production dependencies only
-COPY package.json ./
+COPY --from=builder /app/package*.json ./
 RUN npm install --omit=dev --legacy-peer-deps && \
     npm cache clean --force
 
-# Copy necessary files from builder
-COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/postcss.config.js ./
-COPY --from=builder /app/tailwind.config.js ./
+# Copy built application
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 # Switch to non-root user
 USER nextjs
