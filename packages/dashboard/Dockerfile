@@ -14,7 +14,7 @@ WORKDIR /app
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_APP_URL
-ARG PORT=3000
+ARG PORT=3001
 
 # Set environment variables for build time
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
@@ -57,7 +57,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Set runtime environment variables
 ENV NODE_ENV=production \
-    PORT=3000 \
+    PORT=3001 \
     HOSTNAME=0.0.0.0 \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
@@ -72,6 +72,7 @@ RUN npm install --omit=dev --legacy-peer-deps && \
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/server.js ./server.js
 
 # Switch to non-root user
 USER nextjs
@@ -79,5 +80,5 @@ USER nextjs
 # Expose port
 EXPOSE 3001
 
-# Start the application
+# Start the application with explicit port
 CMD ["node", "server.js"]
