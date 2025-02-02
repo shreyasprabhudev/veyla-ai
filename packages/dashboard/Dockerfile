@@ -23,10 +23,11 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     PORT=$PORT \
     HOSTNAME=0.0.0.0
 
-# First copy package files and install dependencies
+# First copy package files
 COPY package*.json ./
-RUN npm install --production=false && \
-    npm cache clean --force
+
+# Install dependencies
+RUN npm ci
 
 # Copy source code and config files
 COPY . .
@@ -42,8 +43,7 @@ RUN echo "Verifying paths:" && \
     ls -la app/features/chat/components && \
     ls -la app/features/chat
 
-# Install dependencies and build
-RUN npm ci
+# Build application
 RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Clean install production dependencies
@@ -62,17 +62,11 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Set runtime environment variables
 ENV NODE_ENV=production \
     PORT=3001 \
-    HOSTNAME=0.0.0.0 \
-    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
-    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+    HOSTNAME=0.0.0.0
 
-# Install production dependencies only
-COPY --from=builder /app/package*.json ./
-RUN npm install --omit=dev --legacy-peer-deps && \
-    npm cache clean --force
-
-# Copy built application
+# Copy production files
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
@@ -84,5 +78,5 @@ USER nextjs
 # Expose port
 EXPOSE 3001
 
-# Start the application with explicit port
+# Start the application
 CMD ["node", "server.js"]

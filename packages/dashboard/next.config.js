@@ -7,17 +7,6 @@ const nextConfig = {
     esmExternals: 'loose',
     serverComponentsExternalPackages: ['@mlc-ai/web-llm'],
   },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: '/dashboard',
-          destination: '/dashboard/index',
-          basePath: false
-        }
-      ]
-    };
-  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
