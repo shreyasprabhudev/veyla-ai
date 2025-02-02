@@ -25,14 +25,16 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     HOSTNAME=0.0.0.0
 
 # Copy package.json first
-COPY package.json ./
+COPY package*.json ./
 
 # Copy configuration files
 COPY tsconfig*.json ./
 COPY next.config.js ./
+COPY postcss.config.js ./
+COPY tailwind.config.js ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with legacy-peer-deps flag and including dev dependencies
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .

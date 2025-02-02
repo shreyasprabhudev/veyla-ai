@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  basePath: '/dashboard',
+  basePath: process.env.NODE_ENV === 'production' ? '/dashboard' : '',
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -19,6 +19,18 @@ const nextConfig = {
       };
     }
     return config;
+  },
+  // Add rewrites for development environment
+  async rewrites() {
+    if (process.env.NODE_ENV === 'development') {
+      return [
+        {
+          source: '/:path*',
+          destination: '/:path*',
+        },
+      ];
+    }
+    return [];
   },
 };
 

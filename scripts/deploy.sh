@@ -21,7 +21,11 @@ ECR_REPO="veyla-dashboard"
 
 echo "📦 Building Docker image..."
 cd packages/dashboard
-docker build -t $ECR_REPO .
+docker build \
+  --build-arg NEXT_PUBLIC_APP_URL=https://app.veylaai.com \
+  --build-arg NODE_ENV=production \
+  --no-cache \
+  -t $ECR_REPO .
 
 echo "🔑 Logging into ECR..."
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
