@@ -24,22 +24,35 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
-# First copy only package.json to leverage Docker cache
-COPY package.json ./
+# First copy only package files
+COPY package*.json ./
 
 # Install all dependencies (including dev dependencies)
 RUN npm install --legacy-peer-deps && \
     npm cache clean --force
 
-# Copy the entire project
-COPY . .
+# Copy source files
+COPY app ./app
+COPY components ./components
+COPY lib ./lib
+COPY public ./public
+
+# Copy config files
+COPY next.config.js .
+COPY postcss.config.js .
+COPY tailwind.config.js .
+COPY tsconfig.json .
+COPY middleware.ts .
 
 # Verify file structure
-RUN ls -la && \
-    echo "Checking app directory:" && \
+RUN echo "Verifying file structure:" && \
+    ls -la && \
+    echo "\nChecking app directory:" && \
     ls -la app && \
-    echo "Checking components directory:" && \
-    ls -la components
+    echo "\nChecking components/ui directory:" && \
+    ls -la components/ui && \
+    echo "\nChecking app/features/chat/components directory:" && \
+    ls -la app/features/chat/components
 
 # Build application
 RUN npm run build
