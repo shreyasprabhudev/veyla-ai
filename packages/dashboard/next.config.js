@@ -1,11 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  basePath: '/dashboard',
   output: 'standalone',
+  basePath: '/dashboard',
   experimental: {
+    appDir: true,
     esmExternals: 'loose',
     serverComponentsExternalPackages: ['@mlc-ai/web-llm'],
+  },
+  staticPageGenerationTimeout: 120,
+  generateStaticParams: async () => {
+    return [];
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

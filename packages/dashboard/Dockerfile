@@ -1,35 +1,31 @@
 # Build stage
-FROM --platform=linux/amd64 node:20.11.0-alpine AS builder
+FROM node:18-alpine AS base
 
-# Add build dependencies and security updates
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache libc6-compat python3 make g++ && \
-    rm -rf /var/cache/apk/*
-
-# Set working directory
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
 # Define build arguments for environment variables
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_APP_URL
-ARG PORT=3001
 
 # Set environment variables for build time
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
-    PORT=$PORT \
-    HOSTNAME=0.0.0.0
-
-# First copy package files and install dependencies
-COPY package*.json ./
-RUN npm install --production=false && \
-    npm cache clean --force
-
-# Copy source code and config files
-COPY . .
+    NODE_ENV=production
 
 # Verify Next.js config
 RUN cat next.config.js && \
@@ -43,12 +39,10 @@ RUN echo "Verifying paths:" && \
     ls -la app/features/chat
 
 # Build application with verbose output
-RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build && \
-    npm ci --only=production
+RUN npm run build
 
 # Production stage
-FROM --platform=linux/amd64 node:20.11.0-alpine AS runner
-
+FROM base AS runner
 WORKDIR /app
 
 # Create non-root user
@@ -62,11 +56,6 @@ ENV NODE_ENV=production \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-# Install production dependencies only
-COPY --from=builder /app/package*.json ./
-RUN npm install --omit=dev --legacy-peer-deps && \
-    npm cache clean --force
 
 # Copy built application
 COPY --from=builder /app/public ./public
