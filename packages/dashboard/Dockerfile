@@ -27,7 +27,7 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy source code and config files
 COPY . .
@@ -48,7 +48,7 @@ RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Clean install production dependencies
 RUN rm -rf node_modules && \
-    npm ci --only=production
+    npm install --omit=dev
 
 # Production stage
 FROM --platform=linux/amd64 node:20.11.0-alpine AS runner
