@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Disclosure, Menu } from '@headlessui/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '../lib/utils'
-import { createBrowserClient } from '@supabase/ssr'
 import { routes } from '@veyla/shared/routes';
 
 const navigation = [
@@ -26,53 +25,6 @@ const navigation = [
 
 export function Navigation() {
   const pathname = usePathname()
-  const [session, setSession] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          if (typeof document === 'undefined') return ''
-          return document.cookie
-            .split('; ')
-            .find((row) => row.startsWith(`${name}=`))
-            ?.split('=')[1]
-        },
-        set(name: string, value: string) {
-          if (typeof document === 'undefined') return
-          const domain = process.env.NEXT_PUBLIC_ENV === 'development' ? 'localhost' : '.veylaai.com'
-          document.cookie = `${name}=${value}; domain=${domain}; path=/; secure; samesite=lax`
-        },
-        remove(name: string) {
-          if (typeof document === 'undefined') return
-          const domain = process.env.NEXT_PUBLIC_ENV === 'development' ? 'localhost' : '.veylaai.com'
-          document.cookie = `${name}=; domain=${domain}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
-        },
-      },
-    }
-  )
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-  }
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith('/#')) {
@@ -146,30 +98,12 @@ export function Navigation() {
               </div>
               
               <div className="flex items-center space-x-4">
-                {!loading && !session && (
-                  <>
-                    <Link
-                      href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL}${routes.auth.signIn}`}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                    >
-                      Sign in
-                    </Link>
-                    <Link
-                      href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL}${routes.auth.signUp}`}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700"
-                    >
-                      Get Started
-                    </Link>
-                  </>
-                )}
-                {session && (
-                  <button
-                    onClick={handleSignOut}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700"
-                  >
-                    Sign out
-                  </button>
-                )}
+                <Link
+                  href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL}/dashboard`}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Try Now
+                </Link>
               </div>
             </div>
           </div>

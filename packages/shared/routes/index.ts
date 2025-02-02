@@ -3,13 +3,6 @@ export const routes = {
   home: '/',
   dashboard: '/dashboard',
   
-  // Auth routes
-  auth: {
-    signIn: '/auth/signin',
-    signUp: '/auth/signup',
-    callback: '/auth/callback',
-  },
-  
   // External routes
   landing: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   app: process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3001',
@@ -18,9 +11,6 @@ export const routes = {
 // Routes that don't require authentication
 export const publicPaths = new Set([
   routes.home,
-  routes.auth.signIn,
-  routes.auth.signUp,
-  routes.auth.callback,
   '/_next',
   '/api',
   '/static',
